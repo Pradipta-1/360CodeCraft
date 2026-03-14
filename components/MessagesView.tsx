@@ -15,7 +15,7 @@ type Thread = {
 type Message = {
   id: string;
   senderId: string;
-  sender: { id: string; name: string };
+  sender: { id: string; name: string; role: string };
   receiverId?: string | null;
   eventId?: string | null;
   content: string;
@@ -31,6 +31,9 @@ export default function MessagesView() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  const [eventOrganizerId, setEventOrganizerId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [showParticipantDropdown, setShowParticipantDropdown] = useState(false);
   const [partnerNameOverride, setPartnerNameOverride] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newContent, setNewContent] = useState("");
@@ -68,6 +71,10 @@ export default function MessagesView() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to load messages");
       setMessages(data.data ?? []);
+      if (data.eventOrganizerId) setEventOrganizerId(data.eventOrganizerId);
+      else setEventOrganizerId(null);
+      if (data.participants) setParticipants(data.participants);
+      else setParticipants([]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load messages");
     } finally {
@@ -161,6 +168,23 @@ export default function MessagesView() {
     }
   }
 
+  async function handleRemoveParticipant(participantId: string) {
+    if (!selectedUserId || !window.confirm("Are you sure you want to remove this participant?")) return;
+    try {
+      const res = await apiFetch(`/api/events/${selectedUserId}/participants/${participantId}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || "Failed to remove participant");
+      
+      // Refresh messages and participants
+      await fetchMessages(selectedUserId);
+      await fetchThreads();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to remove participant");
+    }
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
@@ -248,7 +272,7 @@ export default function MessagesView() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                           ) : (
-                            name.charAt(0).toUpperCase()
+                            name?.charAt(0).toUpperCase() || "?"
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -276,15 +300,69 @@ export default function MessagesView() {
       <section className="flex flex-1 flex-col bg-slate-950/20">
         {selectedUserId ? (
           <>
-            <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between relative">
+              <div 
+                className={`flex items-center gap-3 ${isEventGroup && currentUser?.id === eventOrganizerId ? "cursor-pointer hover:bg-slate-800/40 p-2 -m-2 rounded-xl transition-all" : ""}`}
+                onClick={() => isEventGroup && currentUser?.id === eventOrganizerId && setShowParticipantDropdown(!showParticipantDropdown)}
+              >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
                   isEventGroup ? "bg-emerald-500 text-black" : "bg-slate-800 text-emerald-400"
                 }`}>
-                  {isEventGroup ? "G" : partnerName.charAt(0).toUpperCase()}
+                  {isEventGroup ? "G" : partnerName?.charAt(0).toUpperCase() || "?"}
                 </div>
-                <h2 className="font-bold text-white">{partnerName}</h2>
+                <div>
+                  <h2 className="font-bold text-white flex items-center gap-2">
+                    {partnerName}
+                    {isEventGroup && currentUser?.id === eventOrganizerId && (
+                      <svg className={`w-4 h-4 text-slate-500 transition-transform ${showParticipantDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </h2>
+                  {isEventGroup && <p className="text-[10px] text-slate-500 font-medium">{participants.length} Participants</p>}
+                </div>
               </div>
+
+              {/* Participant Dropdown for Organizers */}
+              {showParticipantDropdown && isEventGroup && (
+                <div className="absolute top-full left-6 mt-2 w-72 z-50 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-4 border-b border-slate-800 bg-slate-800/30">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Manage Participants</p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                    {participants.map(p => {
+                      const isLeader = p.id === eventOrganizerId;
+                      return (
+                        <div key={p.id} className="flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${isLeader ? "bg-yellow-400 text-black" : "bg-slate-800 text-slate-400"}`}>
+                              {isLeader ? "👑" : p.name?.charAt(0).toUpperCase() || "?"}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{p.name || "Unknown"}</p>
+                              <p className="text-[9px] font-bold text-emerald-400 uppercase">{p.role}</p>
+                            </div>
+                          </div>
+                          {!isLeader && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveParticipant(p.id);
+                              }}
+                              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                              title="Remove Participant"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
@@ -306,15 +384,29 @@ export default function MessagesView() {
                   }
 
                   const isOwn = currentUser ? m.senderId === currentUser.id : m.senderId !== selectedUserId;
+                  const isLeader = m.senderId === eventOrganizerId;
+
                   return (
                     <div
                       key={m.id}
                       className={`flex flex-col ${isOwn ? "items-end" : "items-start animate-in slide-in-from-left-2 duration-300"}`}
                     >
                       {isEventGroup && !isOwn && (
-                        <span className="text-[10px] font-bold text-emerald-400 ml-3 mb-1 uppercase tracking-wider">
-                          {m.sender.name}
-                        </span>
+                        <div className="flex items-center gap-2 mb-1 ml-3">
+                          {isLeader && (
+                            <span className="text-[10px] text-yellow-400" title="Group Leader">👑</span>
+                          )}
+                          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                            {m.sender.name}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter ${
+                            m.sender.role === "TRAINER" 
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+                              : "bg-slate-800 text-slate-500"
+                          }`}>
+                            {m.sender.role}
+                          </span>
+                        </div>
                       )}
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-lg ${

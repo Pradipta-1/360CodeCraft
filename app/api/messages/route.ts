@@ -58,11 +58,14 @@ export async function POST(req: NextRequest) {
         content: content || "",
         imageUrl: imageUrl || null,
         eventId: eventId
+      } as any,
+      include: {
+        sender: {
+          select: { id: true, name: true, role: true }
+        }
       }
     });
 
-    // Notify other participants? (Optional, can be complex for large groups, skipping for now as per minimal change rule unless necessary)
-    
     return NextResponse.json({ success: true, data: message });
   }
 
@@ -102,6 +105,11 @@ export async function POST(req: NextRequest) {
       receiverId,
       content: content || "",
       imageUrl: imageUrl || null
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true, role: true }
+      }
     }
   });
 
