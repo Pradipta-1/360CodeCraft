@@ -1,15 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/apiFetch";
 
+type Event = {
+  id: string;
+  title: string;
+  sportType: string;
+  location: string;
+  startDate: string | null;
+  endDate: string | null;
+  timeRange: string | null;
+  participantLimit: number;
+  description: string;
+};
+
 type Props = {
-  isOpen: boolean;
+  event: Event | null;
   onClose: () => void;
   onSuccess: () => void;
 };
 
-export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) {
+export default function EditEventModal({ event, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -23,7 +35,22 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
     description: "",
   });
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (event) {
+      setFormData({
+        title: event.title,
+        sportType: event.sportType,
+        location: event.location,
+        startDate: event.startDate ? event.startDate.split("T")[0] : "",
+        endDate: event.endDate ? event.endDate.split("T")[0] : "",
+        timeRange: event.timeRange || "",
+        participantLimit: String(event.participantLimit),
+        description: event.description,
+      });
+    }
+  }, [event]);
+
+  if (!event) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +58,8 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
     setError(null);
 
     try {
-      const res = await apiFetch("/api/events", {
-        method: "POST",
+      const res = await apiFetch(`/api/events/${event.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
@@ -42,7 +69,29 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
         onSuccess();
         onClose();
       } else {
-        throw new Error(data.error || "Failed to create event");
+        throw new Error(data.error || "Failed to update event");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this event COMPLETELY? This cannot be undone.")) return;
+    
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/events/${event.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSuccess();
+        onClose();
+      } else {
+        throw new Error(data.error || "Failed to delete event");
       }
     } catch (err: any) {
       setError(err.message);
@@ -52,10 +101,10 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-          <h2 className="text-2xl font-bold text-white">Create New Event</h2>
+          <h2 className="text-2xl font-bold text-white">Edit Event</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -69,7 +118,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
             <input
               required
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="e.g. Morning Yoga Session"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
@@ -81,7 +129,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
               <input
                 required
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="e.g. Yoga"
                 value={formData.sportType}
                 onChange={(e) => setFormData({ ...formData, sportType: e.target.value })}
               />
@@ -104,7 +151,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
             <input
               required
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="e.g. Central Park, NY"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />
@@ -116,7 +162,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
               <input
                 required
                 type="date"
-                min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
@@ -127,7 +172,6 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
               <input
                 required
                 type="date"
-                min={formData.startDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
@@ -136,11 +180,10 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-400">Time Range (e.g. 10:00 AM - 12:00 PM)</label>
+            <label className="text-sm font-medium text-slate-400">Time Range</label>
             <input
               required
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="e.g. 08:00 AM - 09:30 AM"
               value={formData.timeRange}
               onChange={(e) => setFormData({ ...formData, timeRange: e.target.value })}
             />
@@ -151,28 +194,38 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }: Props) 
             <textarea
               required
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all h-24 resize-none"
-              placeholder="Tell people what to expect..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-red-400 text-sm font-medium bg-red-400/10 p-3 rounded-lg border border-red-400/20">{error}</p>}
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-6 flex flex-col gap-3">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-[2] px-8 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+              >
+                {loading ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+            
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
+              onClick={handleDelete}
               disabled={loading}
-              className="flex-2 px-8 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+              className="w-full px-6 py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white font-bold rounded-xl border border-red-500/30 transition-all mt-4"
             >
-              {loading ? "Creating..." : "Create Event"}
+              Delete Event Completely
             </button>
           </div>
         </form>

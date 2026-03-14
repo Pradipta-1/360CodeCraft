@@ -71,8 +71,23 @@ export async function POST(req: NextRequest) {
       description 
     } = body;
 
+    // Validation: Start date must be at least tomorrow
+    if (startDate) {
+      const start = new Date(startDate);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      if (start < tomorrow) {
+        return NextResponse.json({ 
+          success: false, 
+          error: "Events can only be scheduled for dates starting from tomorrow onwards." 
+        }, { status: 400 });
+      }
+    }
+
     // Create the event
-    const event = await prisma.event.create({
+    const event = await (prisma.event.create as any)({
       data: {
         title,
         sportType,
@@ -88,7 +103,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create a system message to initialize the group
-    await prisma.message.create({
+    await (prisma.message.create as any)({
       data: {
         senderId: user.id,
         eventId: event.id,

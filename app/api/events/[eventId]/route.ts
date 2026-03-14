@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ eventId: string }> };
 
@@ -22,4 +23,69 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json({ success: true, data: event });
+}
+
+export async function PATCH(req: NextRequest, context: RouteContext) {
+  const { eventId } = await context.params;
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) {
+      return NextResponse.json({ success: false, error: "Event not found" }, { status: 404 });
+    }
+
+    if (event.organizerId !== user.id) {
+      return NextResponse.json({ success: false, error: "Only the organizer can edit this event" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const updatedEvent = await (prisma.event.update as any)({
+      where: { id: eventId },
+      data: {
+        title: body.title,
+        sportType: body.sportType,
+        location: body.location,
+        startDate: body.startDate ? new Date(body.startDate) : undefined,
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        timeRange: body.timeRange,
+        participantLimit: body.participantLimit ? parseInt(body.participantLimit) : undefined,
+        description: body.description,
+      }
+    });
+
+    return NextResponse.json({ success: true, data: updatedEvent });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const { eventId } = await context.params;
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) {
+      return NextResponse.json({ success: false, error: "Event not found" }, { status: 404 });
+    }
+
+    if (event.organizerId !== user.id) {
+      return NextResponse.json({ success: false, error: "Only the organizer can delete this event" }, { status: 403 });
+    }
+
+    // Delete associated messages and then the event
+    await prisma.message.deleteMany({ where: { eventId } });
+    await prisma.event.delete({ where: { id: eventId } });
+
+    return NextResponse.json({ success: true, message: "Event deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
 }
