@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest) {
     if (name) updateData.name = name;
     if (role) updateData.role = role.toUpperCase();
     if (password) {
-      updateData.password = await hashPassword(password);
+      updateData.passwordHash = await hashPassword(password);
     }
 
     if (Object.keys(updateData).length === 0) {
