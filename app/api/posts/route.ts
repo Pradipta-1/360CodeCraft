@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const posts = await prisma.post.findMany({
@@ -18,7 +20,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, data: posts });
+    return NextResponse.json(
+      { success: true, data: posts },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     console.error("Error fetching posts:", error);
     return NextResponse.json(
