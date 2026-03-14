@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Thread = {
   partner: { id: string; name: string | null } | null;
@@ -42,7 +43,7 @@ export default function MessagesView() {
     setLoadingThreads(true);
     setError(null);
     try {
-      const res = await fetch("/api/messages/threads", { credentials: "include" });
+      const res = await apiFetch("/api/messages/threads");
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to load threads");
       setThreads(data.data ?? []);
@@ -57,7 +58,7 @@ export default function MessagesView() {
     setLoadingMessages(true);
     setError(null);
     try {
-      const res = await fetch(`/api/messages/with/${userId}`, { credentials: "include" });
+      const res = await apiFetch(`/api/messages/with/${userId}`);
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to load messages");
       setMessages(data.data ?? []);
@@ -91,7 +92,7 @@ export default function MessagesView() {
     const inThreads = threads.some(t => t.partner?.id === selectedUserId);
     if (inThreads) return;
     let cancelled = false;
-    fetch(`/api/users/${selectedUserId}`, { credentials: "include" })
+    apiFetch(`/api/users/${selectedUserId}`)
       .then(res => res.json())
       .then(data => {
         if (!cancelled && data.success && data.data?.name)
@@ -111,7 +112,7 @@ export default function MessagesView() {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const upRes = await fetch("/api/upload", {
+        const upRes = await apiFetch("/api/upload", {
           method: "POST",
           body: formData,
         });
@@ -120,10 +121,9 @@ export default function MessagesView() {
         uploadedImageUrl = upData.url;
       }
 
-      const res = await fetch("/api/messages", {
+      const res = await apiFetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ 
           receiverId: selectedUserId, 
           content: newContent.trim(),

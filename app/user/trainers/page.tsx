@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import UserShell from "@/components/UserShell";
+import { apiFetch } from "@/lib/apiFetch";
 
-type Trainer = { id: string; name: string | null };
+type Trainer = { id: string; name: string | null; email: string };
 
 export default function UserTrainersPage() {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -12,7 +13,7 @@ export default function UserTrainersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/trainers", { credentials: "include" })
+    apiFetch("/api/trainers")
       .then(res => res.json())
       .then(data => {
         if (data.success) setTrainers(data.data ?? []);
@@ -45,16 +46,19 @@ export default function UserTrainersPage() {
           ) : trainers.length === 0 ? (
             <p className="card-subtitle">No trainers found.</p>
           ) : (
-            <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
+            <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-[#0a0a0c]">
               {trainers.map(t => (
                 <li
                   key={t.id}
-                  className="flex items-center justify-between px-4 py-3"
+                  className="flex items-center justify-between px-4 py-4 hover:bg-white/5 transition-colors"
                 >
-                  <span className="font-medium text-slate-50">{t.name ?? "Unnamed"}</span>
+                  <div>
+                    <p className="font-medium text-white">{t.name ?? "Unnamed"}</p>
+                    <p className="text-sm text-slate-400">{t.email}</p>
+                  </div>
                   <Link
                     href={`/user/messages?with=${t.id}`}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-slate-50 hover:bg-emerald-500"
+                    className="rounded-lg bg-[#00c896] px-4 py-2 text-sm font-semibold text-white hover:bg-[#00a87a] transition-colors"
                   >
                     Message
                   </Link>

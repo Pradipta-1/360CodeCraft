@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OrganizerShell from "@/components/OrganizerShell";
+import { apiFetch } from "@/lib/apiFetch";
 
 export default function OrganizerProfileSettingsPage() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function OrganizerProfileSettingsPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await apiFetch("/api/auth/me");
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
@@ -30,7 +31,8 @@ export default function OrganizerProfileSettingsPage() {
 
   async function handleLogout() {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await apiFetch("/api/auth/logout", { method: "POST" });
+      sessionStorage.removeItem("auth_token");
       router.push("/auth/login");
     } catch (err) {
       console.error(err);

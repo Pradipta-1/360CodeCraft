@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import TrainerShell from "@/components/TrainerShell";
 import Link from "next/link";
+import { apiFetch } from "@/lib/apiFetch";
 
 type WorkoutPlan = {
   id: string;
@@ -20,7 +21,7 @@ export default function TrainerDashboardPage() {
 
   async function loadPlans() {
     try {
-      const res = await fetch('/api/workout-plans');
+      const res = await apiFetch('/api/workout-plans');
       const data = await res.json();
       if (data.success) {
         setPlans(data.data);
@@ -40,7 +41,7 @@ export default function TrainerDashboardPage() {
     if (!confirm("Are you sure you want to delete this workout plan?")) return;
     
     try {
-      const res = await fetch(`/api/workout-plans/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/workout-plans/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setPlans(prev => prev.filter(p => p.id !== id));

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import OrganizerShell from "@/components/OrganizerShell";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Trainer = { id: string; name: string | null };
 
@@ -12,7 +13,7 @@ export default function OrganizerTrainersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/trainers", { credentials: "include" })
+    apiFetch("/api/trainers")
       .then(res => res.json())
       .then(data => {
         if (data.success) setTrainers(data.data ?? []);

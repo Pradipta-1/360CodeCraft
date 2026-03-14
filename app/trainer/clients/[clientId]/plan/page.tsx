@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import TrainerShell from "@/components/TrainerShell";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Params = {
   clientId: string;
@@ -27,10 +28,9 @@ export default function TrainerClientPlanPage() {
     setSuccess(false);
 
     try {
-      const res = await fetch("/api/workout-plans", {
+      const res = await apiFetch("/api/workout-plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           clientId,
           title: title.trim(),

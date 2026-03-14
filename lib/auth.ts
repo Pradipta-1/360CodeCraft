@@ -25,8 +25,8 @@ export function signToken(payload: JwtPayload) {
 
 export async function getUserFromRequest(req: NextRequest) {
   const token =
-    req.cookies.get("auth_token")?.value ??
-    req.headers.get("authorization")?.replace("Bearer ", "");
+    req.headers.get("authorization")?.replace("Bearer ", "") ??
+    req.cookies.get("auth_token")?.value;
 
   if (!token) return null;
 

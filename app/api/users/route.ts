@@ -11,11 +11,14 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const trainers = await prisma.user.findMany({
-    where: { role: "TRAINER" },
+  const users = await prisma.user.findMany({
+    where: {
+      role: "USER",
+      id: { not: user.id },
+    },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
   });
 
-  return NextResponse.json({ success: true, data: trainers });
+  return NextResponse.json({ success: true, data: users });
 }

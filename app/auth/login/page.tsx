@@ -81,6 +81,11 @@ export default function LoginPage() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Invalid email or password");
       }
+      // Store the token in sessionStorage (per-tab) so each tab maintains
+      // its own independent session, even if another tab logs in simultaneously
+      if (data.token) {
+        sessionStorage.setItem("auth_token", data.token);
+      }
       const role = (data.data?.role || "USER") as Role;
       const redirect =
         role === "TRAINER"

@@ -83,6 +83,9 @@ export default function RegisterPage() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Registration failed");
       }
+      if (data.token) {
+        sessionStorage.setItem("auth_token", data.token);
+      }
       router.push(mode === "TRAINER" ? "/trainer/dashboard" : "/user/dashboard");
     } catch (err: any) {
       setError(err.message ?? "Registration failed");

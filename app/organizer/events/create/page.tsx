@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import OrganizerShell from "@/components/OrganizerShell";
+import { apiFetch } from "@/lib/apiFetch";
 
 export default function OrganizerCreateEventPage() {
   const [title, setTitle] = useState("");
@@ -19,7 +20,7 @@ export default function OrganizerCreateEventPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setMessage(null);
-    const res = await fetch("/api/events", {
+    const res = await apiFetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
