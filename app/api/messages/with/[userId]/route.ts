@@ -20,8 +20,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const event = await prisma.event.findUnique({
     where: { id: otherId },
     include: {
-        participants: { select: { id: true, name: true } },
-        trainerParticipants: { select: { id: true, name: true } }
+        participants: { select: { id: true, name: true, avatarUrl: true } },
+        trainerParticipants: { select: { id: true, name: true, avatarUrl: true } }
     }
   });
 
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       where: { eventId: otherId },
       include: {
         sender: {
-          select: { id: true, name: true, role: true }
+          select: { id: true, name: true, role: true, avatarUrl: true }
         }
       },
       orderBy: { createdAt: "asc" }

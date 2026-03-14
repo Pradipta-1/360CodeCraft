@@ -2,8 +2,9 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { apiFetch } from '@/lib/apiFetch';
 
 type Props = {
   children: ReactNode;
@@ -11,8 +12,16 @@ type Props = {
 
 export default function UserShell({ children }: Props) {
   const pathname = usePathname();
+  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
 
   useEffect(() => {
+    apiFetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUser(data.data);
+      })
+      .catch(() => {});
+
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -79,7 +88,18 @@ export default function UserShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
-          <div className="nav-brand">FITNESS PORTAL - USER</div>
+          <div className="nav-brand flex items-center gap-3">
+            {user && (
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs ring-2 ring-emerald-500/10">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
+              </div>
+            )}
+            FITNESS PORTAL - USER
+          </div>
           <div className="nav-list">
             <Link
               href="/user/dashboard"

@@ -15,7 +15,7 @@ type Thread = {
 type Message = {
   id: string;
   senderId: string;
-  sender: { id: string; name: string; role: string };
+  sender: { id: string; name: string; role: string; avatarUrl?: string | null };
   receiverId?: string | null;
   eventId?: string | null;
   content: string;
@@ -32,7 +32,7 @@ export default function MessagesView() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const [eventOrganizerId, setEventOrganizerId] = useState<string | null>(null);
-  const [participants, setParticipants] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [participants, setParticipants] = useState<{ id: string; name: string; role: string; avatarUrl?: string | null }[]>([]);
   const [showParticipantDropdown, setShowParticipantDropdown] = useState(false);
   const [partnerNameOverride, setPartnerNameOverride] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -264,10 +264,25 @@ export default function MessagesView() {
                       )}
                       
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                          isGroup ? "bg-emerald-500 text-black" : "bg-slate-800 text-emerald-400"
-                        }`}>
-                          {isGroup ? (
+                        <div 
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm overflow-hidden flex-shrink-0 relative group ${
+                            isGroup ? "bg-emerald-500 text-black" : "bg-slate-800 text-emerald-400"
+                          }`}
+                          onClick={(e) => {
+                            if (t.partner?.avatarUrl) {
+                              e.stopPropagation();
+                              setEnlargedImage(t.partner.avatarUrl);
+                            }
+                          }}
+                        >
+                          {t.partner?.avatarUrl ? (
+                            <>
+                              <img src={t.partner.avatarUrl} alt={name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-zoom-in">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                              </div>
+                            </>
+                          ) : isGroup ? (
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
@@ -335,8 +350,22 @@ export default function MessagesView() {
                       return (
                         <div key={p.id} className="flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                           <div className="flex items-center gap-3">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${isLeader ? "bg-yellow-400 text-black" : "bg-slate-800 text-slate-400"}`}>
-                              {isLeader ? "👑" : p.name?.charAt(0).toUpperCase() || "?"}
+                            <div 
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold overflow-hidden flex-shrink-0 cursor-pointer ${isLeader && !p.avatarUrl ? "bg-yellow-400 text-black" : "bg-slate-800 text-slate-400"}`}
+                              onClick={(e) => {
+                                if (p.avatarUrl) {
+                                  e.stopPropagation();
+                                  setEnlargedImage(p.avatarUrl);
+                                }
+                              }}
+                            >
+                              {p.avatarUrl ? (
+                                <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
+                              ) : isLeader ? (
+                                "👑"
+                              ) : (
+                                p.name?.charAt(0).toUpperCase() || "?"
+                              )}
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-white truncate">{p.name || "Unknown"}</p>
@@ -393,6 +422,18 @@ export default function MessagesView() {
                     >
                       {isEventGroup && !isOwn && (
                         <div className="flex items-center gap-2 mb-1 ml-3">
+                          {m.sender?.avatarUrl ? (
+                            <img 
+                              src={m.sender.avatarUrl} 
+                              alt={m.sender.name} 
+                              className="w-5 h-5 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all flex-shrink-0" 
+                              onClick={() => setEnlargedImage(m.sender.avatarUrl!)}
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-emerald-400 flex-shrink-0">
+                              {m.sender?.name?.charAt(0).toUpperCase() || "?"}
+                            </div>
+                          )}
                           {isLeader && (
                             <span className="text-[10px] text-yellow-400" title="Group Leader">👑</span>
                           )}

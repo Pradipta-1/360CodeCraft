@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import UserShell from "@/components/UserShell";
 import { apiFetch } from "@/lib/apiFetch";
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<{ id: string; name: string; role: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; role: string; email: string; avatarUrl?: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   
   // Form state
   const [name, setName] = useState("");
@@ -28,6 +34,7 @@ export default function ProfileSettingsPage() {
             setUser(data.data);
             setName(data.data.name || "");
             setRole(data.data.role || "");
+            setPreviewUrl(data.data.avatarUrl || null);
           }
         }
       } catch (err) {
@@ -49,18 +56,46 @@ export default function ProfileSettingsPage() {
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
   async function handleSave() {
     setUpdating(true);
     setMessage(null);
     try {
+      let uploadedImageUrl = user?.avatarUrl;
+
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const upRes = await apiFetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const upData = await upRes.json();
+        if (upRes.ok && upData.url) {
+          uploadedImageUrl = upData.url;
+        } else {
+          throw new Error("Failed to upload image");
+        }
+      }
+
       const res = await apiFetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, password, role })
+        body: JSON.stringify({ name, password, role, avatarUrl: uploadedImageUrl })
       });
       const data = await res.json();
       if (data.success) {
         setUser(data.data);
+        setPreviewUrl(data.data.avatarUrl || null);
+        setSelectedFile(null);
         setMessage({ type: 'success', text: "Profile updated successfully!" });
         setIsEditing(false);
         setPassword(""); // Clear password field
@@ -100,8 +135,34 @@ export default function ProfileSettingsPage() {
             ) : user ? (
               <div className="space-y-6">
                 {isEditing ? (
-                  <div className="space-y-4 max-w-md">
-                    <div className="space-y-2">
+                    <div className="space-y-4 max-w-md">
+                      <div className="flex flex-col items-center sm:items-start gap-4 mb-6">
+                        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                          <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-3xl text-slate-500 font-bold">{name?.charAt(0)?.toUpperCase()}</span>
+                            )}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                          </div>
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleFileChange}
+                          />
+                        </div>
+                        <p className="text-xs text-slate-400">Click to upload new picture</p>
+                      </div>
+
+                      <div className="space-y-2">
                       <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Username</label>
                       <input 
                         type="text" 
@@ -134,18 +195,28 @@ export default function ProfileSettingsPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Username</h3>
-                      <p className="mt-1 text-lg text-slate-50">{user.name}</p>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-6">
+                      <div 
+                        className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all"
+                        onClick={() => user.avatarUrl && setEnlargedImage(user.avatarUrl)}
+                      >
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-3xl text-slate-500 font-bold">{user.name?.charAt(0)?.toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Username</h3>
+                        <p className="mt-1 text-xl font-bold text-slate-50">{user.name}</p>
+                        <p className="mt-1 text-sm text-emerald-400 capitalize bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 inline-block">{user.role}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Role</h3>
-                      <p className="mt-1 text-lg text-emerald-400 capitalize">{user.role}</p>
-                    </div>
-                    <div>
+                    
+                    <div className="pt-4 border-t border-slate-800">
                       <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Email</h3>
-                      <p className="mt-1 text-lg text-slate-400">{user.email}</p>
+                      <p className="mt-1 text-lg text-slate-300">{user.email}</p>
                     </div>
                   </div>
                 )}
@@ -169,6 +240,8 @@ export default function ProfileSettingsPage() {
                       setIsEditing(false);
                       setName(user?.name || "");
                       setRole(user?.role || "");
+                      setPreviewUrl(user?.avatarUrl || null);
+                      setSelectedFile(null);
                       setPassword("");
                     }}
                     className="action-btn bg-slate-800 text-slate-300 hover:bg-slate-700"
@@ -196,6 +269,30 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
       </div>
+
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div 
+            className="relative max-w-3xl w-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition-colors focus:outline-none ring-1 ring-slate-700/50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <img 
+              src={enlargedImage} 
+              alt="Enlarged profile" 
+              className="w-full max-w-lg aspect-square object-cover rounded-full shadow-2xl ring-4 ring-slate-800"
+            />
+          </div>
+        </div>
+      )}
     </UserShell>
   );
 }

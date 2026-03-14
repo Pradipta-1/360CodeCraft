@@ -286,9 +286,12 @@ export default function CommunityFeed() {
             <div key={post.id} className="card bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Post Header */}
               <div className="p-4 flex items-center gap-3 border-b border-slate-800/50">
-                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold overflow-hidden ring-2 ring-emerald-500/20">
+                <div 
+                  className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold overflow-hidden ring-2 ring-emerald-500/20 cursor-pointer flex-shrink-0"
+                  onClick={() => post.user.avatarUrl && setEnlargedImage(post.user.avatarUrl)}
+                >
                   {post.user.avatarUrl ? (
-                    <img src={post.user.avatarUrl} alt={post.user.name} className="w-full h-full object-cover" />
+                    <img src={post.user.avatarUrl} alt={post.user.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
                   ) : (
                     post.user.name.charAt(0).toUpperCase()
                   )}
@@ -359,9 +362,12 @@ export default function CommunityFeed() {
                     ) : (
                       commentsByPost[post.id]?.map(comment => (
                         <div key={comment.id} className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20">
+                          <div 
+                            className="w-8 h-8 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20 cursor-pointer overflow-hidden"
+                            onClick={() => comment.user.avatarUrl && setEnlargedImage(comment.user.avatarUrl)}
+                          >
                             {comment.user.avatarUrl ? (
-                              <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover rounded-full" />
+                              <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover rounded-full hover:opacity-80 transition-opacity" />
                             ) : (
                               comment.user.name.charAt(0).toUpperCase()
                             )}

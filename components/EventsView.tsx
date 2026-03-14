@@ -18,8 +18,8 @@ type Event = {
   isParticipating: boolean;
   isOrganizer: boolean;
   organizer: { id: string; name: string };
-  participants: { id: string; name: string }[];
-  trainerParticipants: { id: string; name: string }[];
+  participants: { id: string; name: string; avatarUrl?: string | null }[];
+  trainerParticipants: { id: string; name: string; avatarUrl?: string | null }[];
 };
 
 type Props = {
@@ -33,6 +33,7 @@ export default function EventsView({ role }: Props) {
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [viewingParticipants, setViewingParticipants] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -96,6 +97,27 @@ export default function EventsView({ role }: Props) {
           </button>
         )}
       </div>
+
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md p-6 animate-in fade-in duration-300"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <button
+            onClick={() => setEnlargedImage(null)}
+            className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Full size" 
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300"
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-20">
@@ -235,8 +257,17 @@ export default function EventsView({ role }: Props) {
                   {viewingParticipants.trainerParticipants.map(tp => (
                     <div key={tp.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-emerald-500/20 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xs">
-                          {tp.name.charAt(0)}
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden cursor-pointer"
+                          onClick={() => tp.avatarUrl && setEnlargedImage(tp.avatarUrl)}
+                        >
+                          {tp.avatarUrl ? (
+                            <img src={tp.avatarUrl} alt={tp.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
+                          ) : (
+                            <div className="w-full h-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                              {tp.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
                         <span className="text-white font-medium">{tp.name}</span>
                       </div>
@@ -246,8 +277,17 @@ export default function EventsView({ role }: Props) {
                   {viewingParticipants.participants.map(p => (
                     <div key={p.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs">
-                          {p.name.charAt(0)}
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden cursor-pointer"
+                          onClick={() => p.avatarUrl && setEnlargedImage(p.avatarUrl)}
+                        >
+                          {p.avatarUrl ? (
+                            <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
+                          ) : (
+                            <div className="w-full h-full bg-slate-800 text-slate-400 flex items-center justify-center font-bold">
+                              {p.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
                         <span className="text-white font-medium">{p.name}</span>
                       </div>

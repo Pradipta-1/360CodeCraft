@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       role: "USER",
       id: { not: user.id },
     },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarUrl: true },
     orderBy: { name: "asc" },
   });
 

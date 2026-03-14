@@ -4,10 +4,10 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const { id: postId } = await params;
 
     const comments = await prisma.comment.findMany({
       where: { postId },
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(req);
@@ -49,11 +49,13 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Content is required" }, { status: 400 });
     }
 
+    const { id: postId } = await params;
+
     const comment = await prisma.comment.create({
       data: {
         content: content.trim(),
         userId: user.id,
-        postId: params.id,
+        postId: postId,
       },
       include: {
         user: {
