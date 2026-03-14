@@ -3,6 +3,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import { apiFetch } from "@/lib/apiFetch";
 
+type Comment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    role: string;
+  };
+};
+
 type Post = {
   id: string;
   content: string | null;
@@ -14,6 +26,9 @@ type Post = {
     avatarUrl: string | null;
     role: string;
   };
+  likesCount: number;
+  commentsCount: number;
+  isLikedByMe: boolean;
 };
 
 export default function CommunityFeed() {
@@ -24,6 +39,13 @@ export default function CommunityFeed() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>({});
+  const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
+  const [newComment, setNewComment] = useState<Record<string, string>>({});
+  const [isCommenting, setIsCommenting] = useState<Record<string, boolean>>({});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,6 +63,81 @@ export default function CommunityFeed() {
       console.error("Failed to fetch posts:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    try {
+      const res = await apiFetch(`/api/posts/${postId}/like`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return {
+              ...p,
+              isLikedByMe: data.liked,
+              likesCount: data.liked ? p.likesCount + 1 : p.likesCount - 1
+            };
+          }
+          return p;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+    }
+  };
+
+  const toggleComments = async (postId: string) => {
+    const isExpanded = expandedComments[postId];
+    setExpandedComments(prev => ({ ...prev, [postId]: !isExpanded }));
+
+    if (!isExpanded && !commentsByPost[postId]) {
+      fetchComments(postId);
+    }
+  };
+
+  const fetchComments = async (postId: string) => {
+    setLoadingComments(prev => ({ ...prev, [postId]: true }));
+    try {
+      const res = await apiFetch(`/api/posts/${postId}/comments`);
+      const data = await res.json();
+      if (data.success) {
+        setCommentsByPost(prev => ({ ...prev, [postId]: data.data }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch comments:", err);
+    } finally {
+      setLoadingComments(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    const commentText = newComment[postId]?.trim();
+    if (!commentText) return;
+
+    setIsCommenting(prev => ({ ...prev, [postId]: true }));
+    try {
+      const res = await apiFetch(`/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: commentText }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommentsByPost(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), data.data]
+        }));
+        setNewComment(prev => ({ ...prev, [postId]: "" }));
+        setPosts(prev => prev.map(p => 
+          p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
+        ));
+      }
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    } finally {
+      setIsCommenting(prev => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -63,7 +160,6 @@ export default function CommunityFeed() {
     let uploadedImageUrl = null;
 
     try {
-      // 1. Upload image if selected
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
@@ -79,7 +175,6 @@ export default function CommunityFeed() {
         }
       }
 
-      // 2. Create post
       const res = await apiFetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,7 +186,13 @@ export default function CommunityFeed() {
 
       const data = await res.json();
       if (data.success) {
-        setPosts([data.data, ...posts]);
+        const newPostWithCounts = {
+          ...data.data,
+          likesCount: 0,
+          commentsCount: 0,
+          isLikedByMe: false
+        };
+        setPosts([newPostWithCounts, ...posts]);
         setContent("");
         setSelectedFile(null);
         setPreviewUrl(null);
@@ -216,36 +317,115 @@ export default function CommunityFeed() {
                   <img
                     src={post.imageUrl}
                     alt="Post image"
-                    className="absolute inset-0 w-full h-full object-contain md:object-cover"
+                    className="absolute inset-0 w-full h-full object-contain md:object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setEnlargedImage(post.imageUrl)}
                   />
                 </div>
               )}
 
-              {/* Post Footer (Simplified interactions) */}
-              <div className="p-4 flex items-center gap-6 border-t border-slate-800/50">
-                <button className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors group">
-                  <svg className="w-6 h-6 group-hover:fill-red-400/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Post Footer */}
+              <div className="px-4 py-3 flex items-center gap-6 border-t border-slate-800/50">
+                <button 
+                  onClick={() => handleLike(post.id)}
+                  className={`flex items-center gap-2 transition-colors group ${post.isLikedByMe ? "text-red-400" : "text-slate-400 hover:text-red-400"}`}
+                >
+                  <svg className={`w-6 h-6 ${post.isLikedByMe ? "fill-red-400" : "group-hover:fill-red-400/20"}`} fill={post.isLikedByMe ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
-                  <span className="text-sm font-medium">Like</span>
+                  <span className="text-sm font-medium">{post.likesCount > 0 ? post.likesCount : "Like"}</span>
                 </button>
-                <button className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group">
-                  <svg className="w-6 h-6 group-hover:fill-emerald-400/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button 
+                  onClick={() => toggleComments(post.id)}
+                  className={`flex items-center gap-2 transition-colors group ${expandedComments[post.id] ? "text-emerald-400" : "text-slate-400 hover:text-emerald-400"}`}
+                >
+                  <svg className={`w-6 h-6 ${expandedComments[post.id] ? "fill-emerald-400/20" : "group-hover:fill-emerald-400/20"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.855-1.246L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  <span className="text-sm font-medium">Comment</span>
-                </button>
-                <button className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span className="text-sm font-medium">Share</span>
+                  <span className="text-sm font-medium">{post.commentsCount > 0 ? post.commentsCount : "Comment"}</span>
                 </button>
               </div>
+
+              {/* Comments Section */}
+              {expandedComments[post.id] && (
+                <div className="bg-slate-950/30 border-t border-slate-800/50 p-4 space-y-4">
+                  {/* Comment List */}
+                  <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {loadingComments[post.id] ? (
+                      <div className="py-4 text-center">
+                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent" />
+                      </div>
+                    ) : commentsByPost[post.id]?.length === 0 ? (
+                      <p className="text-slate-500 text-sm italic py-2">No comments yet.</p>
+                    ) : (
+                      commentsByPost[post.id]?.map(comment => (
+                        <div key={comment.id} className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20">
+                            {comment.user.avatarUrl ? (
+                              <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              comment.user.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800/30">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold text-white">{comment.user.name}</span>
+                              <span className="text-[10px] text-slate-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-slate-300">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Add Comment */}
+                  <form onSubmit={(e) => handleAddComment(e, post.id)} className="flex gap-2 pt-2">
+                    <input
+                      type="text"
+                      placeholder="Add a comment..."
+                      value={newComment[post.id] || ""}
+                      onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
+                      className="flex-1 bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white focus:border-emerald-500 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isCommenting[post.id] || !newComment[post.id]?.trim()}
+                      className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500 text-white text-sm font-bold rounded-lg transition-all"
+                    >
+                      {isCommenting[post.id] ? "..." : "Post"}
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
+
+      {/* Image Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div 
+            className="relative max-w-5xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition-colors focus:outline-none ring-1 ring-slate-700/50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <img 
+              src={enlargedImage} 
+              alt="Post image" 
+              className="w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .card {
@@ -253,6 +433,19 @@ export default function CommunityFeed() {
         }
         .card:hover {
           transform: translateY(-2px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #475569;
         }
       `}</style>
     </div>
