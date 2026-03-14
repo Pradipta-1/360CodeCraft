@@ -12,34 +12,22 @@ type Props = {
 
 export default function UserShell({ children }: Props) {
   const pathname = usePathname();
-<<<<<<< HEAD
-  const [userName, setUserName] = useState<string>("");
+  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
 
   useEffect(() => {
     async function fetchUser() {
       try {
         const res = await apiFetch("/api/auth/me");
         const data = await res.json();
-        if (data.success && data.data.name) {
-          setUserName(data.data.name);
+        if (data.success) {
+          setUser(data.data);
         }
       } catch (err) {
         console.error("Failed to fetch user in side shell:", err);
       }
     }
     fetchUser();
-=======
-  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
 
-  useEffect(() => {
-    apiFetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setUser(data.data);
-      })
-      .catch(() => {});
-
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -106,10 +94,6 @@ export default function UserShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
-<<<<<<< HEAD
-          <div className="nav-brand">
-            {userName ? `HELLO, TRAINEE ${userName.toUpperCase()}` : "FITNESS PORTAL - USER"}
-=======
           <div className="nav-brand flex items-center gap-3">
             {user && (
               <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs ring-2 ring-emerald-500/10">
@@ -120,8 +104,7 @@ export default function UserShell({ children }: Props) {
                 )}
               </div>
             )}
-            FITNESS PORTAL - USER
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
+            {user ? `HELLO, TRAINEE ${user.name.toUpperCase()}` : "FITNESS PORTAL - USER"}
           </div>
           <div className="nav-list">
             <Link

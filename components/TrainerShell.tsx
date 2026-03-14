@@ -12,34 +12,23 @@ type Props = {
 
 export default function TrainerShell({ children }: Props) {
   const pathname = usePathname();
-<<<<<<< HEAD
-  const [userName, setUserName] = useState<string>("");
+  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
+    // Fetch User
     async function fetchUser() {
       try {
         const res = await apiFetch("/api/auth/me");
         const data = await res.json();
-        if (data.success && data.data.name) {
-          setUserName(data.data.name);
+        if (data.success) {
+          setUser(data.data);
         }
       } catch (err) {
         console.error("Failed to fetch user in side shell:", err);
       }
     }
     fetchUser();
-=======
-  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
-  const [pendingRequests, setPendingRequests] = useState(0);
-
-  useEffect(() => {
-    // Fetch User
-    apiFetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setUser(data.data);
-      })
-      .catch(() => {});
 
     // Fetch Pending Routine Requests (poll every 10s to keep ping updated)
     const fetchRequests = () => {
@@ -57,8 +46,6 @@ export default function TrainerShell({ children }: Props) {
     fetchRequests();
     const interval = setInterval(fetchRequests, 10000);
 
-
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -126,10 +113,6 @@ export default function TrainerShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
-<<<<<<< HEAD
-          <div className="nav-brand">
-            {userName ? `HELLO, TRAINER ${userName.toUpperCase()}` : "FITNESS PORTAL - TRAINER"}
-=======
           <div className="nav-brand flex items-center gap-3">
             {user && (
               <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs ring-2 ring-emerald-500/10">
@@ -140,8 +123,7 @@ export default function TrainerShell({ children }: Props) {
                 )}
               </div>
             )}
-            FITNESS PORTAL - TRAINER
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
+            {user ? `HELLO, TRAINER ${user.name.toUpperCase()}` : "FITNESS PORTAL - TRAINER"}
           </div>
           <div className="nav-list">
             <Link

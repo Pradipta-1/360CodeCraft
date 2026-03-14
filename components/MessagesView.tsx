@@ -350,12 +350,8 @@ export default function MessagesView() {
                       return (
                         <div key={p.id} className="flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                           <div className="flex items-center gap-3">
-<<<<<<< HEAD
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isLeader ? "bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]" : "bg-slate-800 text-slate-400"}`}>
-                              {isLeader ? "👑" : p.name?.charAt(0).toUpperCase() || "?"}
-=======
                             <div 
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold overflow-hidden flex-shrink-0 cursor-pointer ${isLeader && !p.avatarUrl ? "bg-yellow-400 text-black" : "bg-slate-800 text-slate-400"}`}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden flex-shrink-0 cursor-pointer ${isLeader && !p.avatarUrl ? "bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]" : "bg-slate-800 text-slate-400"}`}
                               onClick={(e) => {
                                 if (p.avatarUrl) {
                                   e.stopPropagation();
@@ -370,7 +366,6 @@ export default function MessagesView() {
                               ) : (
                                 p.name?.charAt(0).toUpperCase() || "?"
                               )}
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-white truncate">{p.name || "Unknown"}</p>
@@ -440,7 +435,7 @@ export default function MessagesView() {
                             </div>
                           )}
                           {isLeader && (
-                            <span className="text-sm text-yellow-400 drop-shadow-sm" title="Group Leader text-shadow">👑</span>
+                            <span className="text-lg text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" title="Group Leader">👑</span>
                           )}
                           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
                             {m.sender?.name || 'Unknown'}

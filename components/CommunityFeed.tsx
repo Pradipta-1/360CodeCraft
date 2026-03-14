@@ -575,35 +575,11 @@ export default function CommunityFeed() {
                     ) : commentsByPost[post.id]?.length === 0 ? (
                       <p className="text-slate-500 text-sm italic py-2">No comments yet.</p>
                     ) : (
-<<<<<<< HEAD
                       commentsByPost[post.id]
                         ?.filter(c => !c.parentId)
                         .map(comment => (
                           <CommentItem key={comment.id} comment={comment} postId={post.id} />
                         ))
-=======
-                      commentsByPost[post.id]?.map(comment => (
-                        <div key={comment.id} className="flex gap-3">
-                          <div 
-                            className="w-8 h-8 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20 cursor-pointer overflow-hidden"
-                            onClick={() => comment.user.avatarUrl && setEnlargedImage(comment.user.avatarUrl)}
-                          >
-                            {comment.user.avatarUrl ? (
-                              <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover rounded-full hover:opacity-80 transition-opacity" />
-                            ) : (
-                              comment.user.name.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800/30">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-bold text-white">{comment.user.name}</span>
-                              <span className="text-[10px] text-slate-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-sm text-slate-300">{comment.content}</p>
-                          </div>
-                        </div>
-                      ))
->>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
                     )}
                   </div>
 
