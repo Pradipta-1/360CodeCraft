@@ -21,6 +21,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (receiverId === user.id) {
+    return NextResponse.json(
+      { success: false, error: "You cannot message yourself." },
+      { status: 400 }
+    );
+  }
+
   // Trainers can only message clients who have already messaged them first
   if (user.role === "TRAINER") {
     const receiver = await prisma.user.findUnique({

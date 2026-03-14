@@ -3,9 +3,9 @@ import OrganizerShell from "@/components/OrganizerShell";
 
 export default function OrganizerLayout({ children }: { children: ReactNode }) {
   return (
-    <OrganizerShell>
+    <>
       {children}
-    </OrganizerShell>
+    </>
   );
 }
 

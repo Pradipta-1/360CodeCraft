@@ -8,44 +8,30 @@ type WorkoutPlan = {
   title: string;
   description: string;
   createdAt: string;
-  trainer?: { id: string; name: string | null } | null;
+  trainer: {
+    name: string;
+  };
 };
 
 export default function UserDashboardPage() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
-  const [plansError, setPlansError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-
     async function loadPlans() {
-      setLoadingPlans(true);
-      setPlansError(null);
       try {
-        const res = await fetch('/api/workout-plans', { credentials: 'include' });
+        const res = await fetch('/api/workout-plans');
         const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Failed to load workout plans');
+        if (data.success) {
+          setPlans(data.data);
         }
-        if (!cancelled) {
-          setPlans(data.data ?? []);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setPlansError(e instanceof Error ? e.message : 'Failed to load workout plans');
-        }
+      } catch (err) {
+        console.error('Failed to load plans:', err);
       } finally {
-        if (!cancelled) {
-          setLoadingPlans(false);
-        }
+        setLoading(false);
       }
     }
-
     loadPlans();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const latestPlan = plans[0];
@@ -56,9 +42,44 @@ export default function UserDashboardPage() {
         <div className="card">
           <h1 className="card-title">User Dashboard</h1>
           <p className="card-subtitle">
-            Recommended events, featured trainers, joined events, and community activity will appear
-            here.
+            Welcome back! Here is a summary of your fitness journey.
           </p>
+        </div>
+
+        {/* Workout Plan Section */}
+        <div className="card">
+          <h2 className="card-title" style={{ fontSize: '20px', color: 'var(--brand-primary)' }}>
+            Latest Workout Plan
+          </h2>
+          {loading ? (
+            <p className="card-subtitle">Loading plan...</p>
+          ) : latestPlan ? (
+            <div style={{ marginTop: '20px' }}>
+              <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '10px' }}>
+                {latestPlan.title}
+              </h3>
+              <p 
+                className="card-subtitle" 
+                style={{ 
+                  whiteSpace: 'pre-wrap', 
+                  background: 'rgba(255,255,255,0.05)', 
+                  padding: '20px', 
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  lineHeight: '1.6'
+                }}
+              >
+                {latestPlan.description}
+              </p>
+              <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginTop: '12px' }}>
+                Assigned by {latestPlan.trainer?.name ? `Trainer ${latestPlan.trainer.name}` : 'You'} on {new Date(latestPlan.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          ) : (
+            <p className="card-subtitle" style={{ marginTop: '10px' }}>
+              No workout plans assigned yet. Contact a trainer to get started!
+            </p>
+          )}
         </div>
 
         <div className="card hero-card">
@@ -75,41 +96,7 @@ export default function UserDashboardPage() {
             </p>
           </div>
         </div>
-
-        <div className="card">
-          <h2 className="card-title" style={{ fontSize: 20 }}>
-            Your Workout Plan
-          </h2>
-          {plansError && (
-            <p className="card-subtitle" style={{ color: '#fecaca' }}>
-              {plansError}
-            </p>
-          )}
-          {!plansError && loadingPlans && (
-            <p className="card-subtitle">Loading your workout plan…</p>
-          )}
-          {!plansError && !loadingPlans && !latestPlan && (
-            <p className="card-subtitle">
-              You don&apos;t have a workout plan yet. Once your trainer assigns one, it will appear
-              here.
-            </p>
-          )}
-          {!plansError && !loadingPlans && latestPlan && (
-            <div className="mt-3 space-y-2">
-              <p className="text-lg font-semibold text-white">{latestPlan.title}</p>
-              {latestPlan.trainer?.name && (
-                <p className="text-xs text-slate-400">
-                  Assigned by {latestPlan.trainer.name}
-                </p>
-              )}
-              <p className="card-subtitle" style={{ whiteSpace: 'pre-wrap' }}>
-                {latestPlan.description}
-              </p>
-            </div>
-          )}
-        </div>
       </div>
     </UserShell>
   );
 }
-

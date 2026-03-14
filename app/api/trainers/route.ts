@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
   }
 
   const trainers = await prisma.user.findMany({
-    where: { role: "TRAINER" },
+    where: { 
+      role: "TRAINER",
+      id: { not: user.id }
+    },
     select: { id: true, name: true },
     orderBy: { name: "asc" }
   });

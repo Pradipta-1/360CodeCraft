@@ -250,8 +250,8 @@ export default function MessagesView() {
                       <div
                         className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                           isOwn
-                            ? "bg-emerald-600 text-slate-50"
-                            : "bg-slate-700 text-slate-100"
+                            ? "bg-[#00c896] text-black"
+                            : "border border-[var(--glass-border)] bg-[var(--glass-bg)] text-white"
                         }`}
                       >
                         {m.imageUrl && (
@@ -322,13 +322,13 @@ export default function MessagesView() {
                   onChange={e => setNewContent(e.target.value)}
                   onPaste={handlePaste}
                   placeholder="Type a message or paste an image (Ctrl+V)…"
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                  className="flex-1 rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-[#00c896] focus:outline-none"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || (!newContent.trim() && !selectedFile)}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-slate-50 hover:bg-emerald-500 disabled:opacity-50"
+                  className="action-btn disabled:opacity-50"
                 >
                   {sending ? "Sending…" : "Send"}
                 </button>

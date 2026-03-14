@@ -1,0 +1,32 @@
+﻿[
+  {
+    "id": "cmmqiat6b0001nuwoe63eiyur",
+    "senderId": "cmmpiyo5m0000nu9km7zb0hdo",
+    "receiverId": "cmmpjekyx00002js0qqcjx4x5",
+    "eventId": null,
+    "content": "",
+    "imageUrl": "/uploads/1773503678397-33397372.png",
+    "read": false,
+    "createdAt": "2026-03-14T15:54:39.533Z"
+  },
+  {
+    "id": "cmmq5h5pc0005nur4w7ch7j7z",
+    "senderId": "cmmpjekyx00002js0qqcjx4x5",
+    "receiverId": "cmmpjekyx00002js0qqcjx4x5",
+    "eventId": null,
+    "content": "\\",
+    "imageUrl": "/uploads/1773482138895-214882585.png",
+    "read": false,
+    "createdAt": "2026-03-14T09:55:40.704Z"
+  },
+  {
+    "id": "cmmq5ayku0001nur460ab6u02",
+    "senderId": "cmmpiyo5m0000nu9km7zb0hdo",
+    "receiverId": "cmmpyn02m0000u7g4tjsoejnr",
+    "eventId": null,
+    "content": "",
+    "imageUrl": "/uploads/1773481850088-34574492.jpeg",
+    "read": false,
+    "createdAt": "2026-03-14T09:50:51.530Z"
+  }
+]

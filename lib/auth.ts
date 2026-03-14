@@ -41,8 +41,10 @@ export async function getUserFromRequest(req: NextRequest) {
   }
 }
 
-export function requireRole(userRole: string | undefined, allowed: string[]) {
+export function requireRole(userRole: any, allowed: string[]) {
   if (!userRole) return false;
-  return allowed.includes(userRole);
+  const normalizedUserRole = String(userRole).toUpperCase();
+  const normalizedAllowed = allowed.map(r => r.toUpperCase());
+  return normalizedAllowed.includes(normalizedUserRole);
 }
 

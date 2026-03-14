@@ -25,6 +25,10 @@ export async function GET(req: NextRequest) {
 
   for (const m of messages) {
     const otherId = m.senderId === user.id ? m.receiverId : m.senderId;
+    
+    // Skip if the conversation is with yourself
+    if (otherId === user.id) continue;
+
     if (!threadsMap.has(otherId)) {
       threadsMap.set(otherId, {
         userId: otherId,

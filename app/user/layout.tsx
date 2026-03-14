@@ -14,7 +14,8 @@ export default function UserLayout({ children }: { children: ReactNode }) {
     pathname === "/user/trainers" ||
     pathname === "/user/clients" ||
     pathname === "/user/community" ||
-    pathname === "/user/messages"
+    pathname === "/user/messages" ||
+    pathname === "/user/profile-settings"
   ) {
     return <>{children}</>;
   }

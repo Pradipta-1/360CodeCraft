@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -78,8 +78,8 @@ export default function UserShell({ children }: Props) {
       <div id="star-container" />
 
       <div className="app-container">
-        <aside className="sidebar">
-          <div className="sidebar-header">USER</div>
+        <nav className="top-nav">
+          <div className="nav-brand">FITNESS PORTAL - USER</div>
           <div className="nav-list">
             <Link
               href="/user/dashboard"
@@ -99,12 +99,7 @@ export default function UserShell({ children }: Props) {
             >
               Trainers
             </Link>
-            <Link
-              href="/user/clients"
-              className={`nav-item${pathname === '/user/clients' ? ' active' : ''}`}
-            >
-              Clients
-            </Link>
+
             <Link
               href="/user/community"
               className={`nav-item${pathname === '/user/community' ? ' active' : ''}`}
@@ -117,10 +112,22 @@ export default function UserShell({ children }: Props) {
             >
               Messages
             </Link>
+            <Link
+              href="/user/profile-settings"
+              className={`nav-item${pathname === '/user/profile-settings' ? ' active' : ''}`}
+            >
+              Profile &amp; Settings
+            </Link>
           </div>
-        </aside>
+        </nav>
 
-        <main className="main-content">{children}</main>
+        <main className="main-content">
+          {children}
+        </main>
+        
+        <footer className="app-footer">
+          &copy; 2026 Fitness Portal Dashboard. All rights reserved.
+        </footer>
       </div>
 
       <style jsx global>{`
@@ -128,10 +135,10 @@ export default function UserShell({ children }: Props) {
           --brand-primary: #00c896;
           --brand-primary-glow: rgba(0, 200, 150, 0.2);
           --bg-color: #050505;
-          --sidebar-bg: rgba(10, 10, 12, 0.8);
+          --nav-bg: rgba(10, 10, 12, 0.85);
           --text-main: #ffffff;
           --text-dim: #a1a1aa;
-          --glass-bg: rgba(20, 20, 20, 0.6);
+          --glass-bg: rgba(20, 20, 20, 0.65);
           --glass-border: rgba(255, 255, 255, 0.05);
         }
 
@@ -210,40 +217,43 @@ export default function UserShell({ children }: Props) {
 
         .app-container {
           display: flex;
+          flex-direction: column;
           width: 100%;
           height: 100%;
           position: relative;
           z-index: 10;
         }
 
-        .sidebar {
-          width: 260px;
-          background: var(--sidebar-bg);
+        .top-nav {
+          width: 100%;
+          height: 70px;
+          background: var(--nav-bg);
           backdrop-filter: blur(10px);
-          border-right: 1px solid var(--glass-border);
+          border-bottom: 1px solid var(--glass-border);
           display: flex;
-          flex-direction: column;
-          padding: 40px 0;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 40px;
+          flex-shrink: 0;
         }
 
-        .sidebar-header {
-          padding: 0 30px;
-          font-size: 11px;
-          color: var(--text-dim);
-          text-transform: uppercase;
+        .nav-brand {
+          font-size: 16px;
+          color: var(--brand-primary);
           letter-spacing: 2px;
           font-weight: 700;
-          margin-bottom: 20px;
         }
 
         .nav-list {
           display: flex;
-          flex-direction: column;
-          gap: 5px;
+          height: 100%;
+          gap: 0;
         }
 
         .nav-item {
-          padding: 14px 30px;
+          padding: 0 20px;
+          display: flex;
+          align-items: center;
           color: var(--text-dim);
           text-decoration: none;
           font-size: 15px;
@@ -251,18 +261,18 @@ export default function UserShell({ children }: Props) {
           transition: all 0.3s ease;
           cursor: pointer;
           position: relative;
-          border-left: 3px solid transparent;
+          border-bottom: 3px solid transparent;
         }
 
         .nav-item:hover {
           color: var(--text-main);
-          background: rgba(255, 255, 255, 0.02);
+          background: rgba(255, 255, 255, 0.03);
         }
 
         .nav-item.active {
           color: var(--brand-primary);
-          background: linear-gradient(90deg, var(--brand-primary-glow) 0%, transparent 100%);
-          border-left: 3px solid var(--brand-primary);
+          background: linear-gradient(to top, var(--brand-primary-glow) 0%, transparent 100%);
+          border-bottom: 3px solid var(--brand-primary);
           font-weight: 600;
         }
 
@@ -378,8 +388,51 @@ export default function UserShell({ children }: Props) {
           font-size: 32px;
           margin-bottom: 10px;
         }
+
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+
+        .dashboard-small-card {
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: 14px;
+          padding: 20px;
+          transition: 0.3s;
+        }
+        
+        .dashboard-small-card:hover {
+          border-color: rgba(0,200,150,0.4);
+          transform: translateY(-3px);
+        }
+
+        .action-btn {
+          background: transparent;
+          border: 1px solid var(--brand-primary);
+          color: var(--brand-primary);
+          padding: 8px 14px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: 0.3s;
+          margin-top: 10px;
+        }
+        
+        .action-btn:hover {
+          background: var(--brand-primary);
+          color: black;
+          box-shadow: 0 0 10px var(--brand-primary);
+        }
+
+        .app-footer {
+          padding: 20px;
+          text-align: center;
+          color: var(--text-dim);
+          border-top: 1px solid var(--glass-border);
+          font-size: 13px;
+        }
       `}</style>
     </>
   );
 }
-

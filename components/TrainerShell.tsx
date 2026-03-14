@@ -1,9 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
-import Link from "next/link";
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 type Props = {
   children: ReactNode;
@@ -14,28 +14,28 @@ export default function TrainerShell({ children }: Props) {
 
   useEffect(() => {
     function createStarfield() {
-      const container = document.getElementById("star-container");
+      const container = document.getElementById('star-container');
       if (!container) return;
 
-      container.querySelectorAll(".star, .shooting-star").forEach((el) => el.remove());
+      container.querySelectorAll('.star, .shooting-star').forEach((el) => el.remove());
 
       const count = 120;
 
       for (let i = 0; i < count; i++) {
-        const star = document.createElement("div");
-        star.className = "star";
+        const star = document.createElement('div');
+        star.className = 'star';
 
         const size = Math.random() * 2 + 1;
-        star.style.width = size + "px";
-        star.style.height = size + "px";
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
 
-        star.style.left = Math.random() * 100 + "%";
-        star.style.top = Math.random() * 100 + "%";
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
 
-        star.style.setProperty("--duration", String(Math.random() * 3 + 2) + "s");
-        star.style.animationDelay = String(Math.random() * 5) + "s";
+        star.style.setProperty('--duration', String(Math.random() * 3 + 2) + 's');
+        star.style.animationDelay = String(Math.random() * 5) + 's';
 
-        if (Math.random() > 0.85) star.style.background = "#00c896";
+        if (Math.random() > 0.85) star.style.background = '#00c896';
 
         container.appendChild(star);
       }
@@ -44,14 +44,14 @@ export default function TrainerShell({ children }: Props) {
     let shootingCleanup: (() => void) | null = null;
 
     function triggerShootingStar() {
-      const container = document.getElementById("star-container");
+      const container = document.getElementById('star-container');
       if (!container) return;
 
-      const shooter = document.createElement("div");
-      shooter.className = "shooting-star";
+      const shooter = document.createElement('div');
+      shooter.className = 'shooting-star';
 
-      shooter.style.left = Math.random() * 80 + "%";
-      shooter.style.top = Math.random() * 40 + "%";
+      shooter.style.left = Math.random() * 80 + '%';
+      shooter.style.top = Math.random() * 40 + '%';
 
       container.appendChild(shooter);
 
@@ -78,8 +78,8 @@ export default function TrainerShell({ children }: Props) {
       <div id="star-container" />
 
       <div className="app-container">
-        <aside className="sidebar">
-          <div className="sidebar-header">TRAINER</div>
+        <nav className="top-nav">
+          <div className="nav-brand">FITNESS PORTAL - TRAINER</div>
           <div className="nav-list">
             <Link
               href="/trainer/dashboard"
@@ -105,10 +105,22 @@ export default function TrainerShell({ children }: Props) {
             >
               Messages
             </Link>
+            <Link
+              href="/trainer/profile-settings"
+              className={`nav-item${pathname === "/trainer/profile-settings" ? " active" : ""}`}
+            >
+              Profile &amp; Settings
+            </Link>
           </div>
-        </aside>
+        </nav>
 
-        <main className="main-content">{children}</main>
+        <main className="main-content">
+          {children}
+        </main>
+        
+        <footer className="app-footer">
+          &copy; 2026 Fitness Portal Dashboard. All rights reserved.
+        </footer>
       </div>
 
       <style jsx global>{`
@@ -116,10 +128,10 @@ export default function TrainerShell({ children }: Props) {
           --brand-primary: #00c896;
           --brand-primary-glow: rgba(0, 200, 150, 0.2);
           --bg-color: #050505;
-          --sidebar-bg: rgba(10, 10, 12, 0.8);
+          --nav-bg: rgba(10, 10, 12, 0.85);
           --text-main: #ffffff;
           --text-dim: #a1a1aa;
-          --glass-bg: rgba(20, 20, 20, 0.6);
+          --glass-bg: rgba(20, 20, 20, 0.65);
           --glass-border: rgba(255, 255, 255, 0.05);
         }
 
@@ -198,40 +210,43 @@ export default function TrainerShell({ children }: Props) {
 
         .app-container {
           display: flex;
+          flex-direction: column;
           width: 100%;
           height: 100%;
           position: relative;
           z-index: 10;
         }
 
-        .sidebar {
-          width: 260px;
-          background: var(--sidebar-bg);
+        .top-nav {
+          width: 100%;
+          height: 70px;
+          background: var(--nav-bg);
           backdrop-filter: blur(10px);
-          border-right: 1px solid var(--glass-border);
+          border-bottom: 1px solid var(--glass-border);
           display: flex;
-          flex-direction: column;
-          padding: 40px 0;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 40px;
+          flex-shrink: 0;
         }
 
-        .sidebar-header {
-          padding: 0 30px;
-          font-size: 11px;
-          color: var(--text-dim);
-          text-transform: uppercase;
+        .nav-brand {
+          font-size: 16px;
+          color: var(--brand-primary);
           letter-spacing: 2px;
           font-weight: 700;
-          margin-bottom: 20px;
         }
 
         .nav-list {
           display: flex;
-          flex-direction: column;
-          gap: 5px;
+          height: 100%;
+          gap: 0;
         }
 
         .nav-item {
-          padding: 14px 30px;
+          padding: 0 20px;
+          display: flex;
+          align-items: center;
           color: var(--text-dim);
           text-decoration: none;
           font-size: 15px;
@@ -239,18 +254,18 @@ export default function TrainerShell({ children }: Props) {
           transition: all 0.3s ease;
           cursor: pointer;
           position: relative;
-          border-left: 3px solid transparent;
+          border-bottom: 3px solid transparent;
         }
 
         .nav-item:hover {
           color: var(--text-main);
-          background: rgba(255, 255, 255, 0.02);
+          background: rgba(255, 255, 255, 0.03);
         }
 
         .nav-item.active {
           color: var(--brand-primary);
-          background: linear-gradient(90deg, var(--brand-primary-glow) 0%, transparent 100%);
-          border-left: 3px solid var(--brand-primary);
+          background: linear-gradient(to top, var(--brand-primary-glow) 0%, transparent 100%);
+          border-bottom: 3px solid var(--brand-primary);
           font-weight: 600;
         }
 
@@ -365,6 +380,50 @@ export default function TrainerShell({ children }: Props) {
           color: var(--brand-primary);
           font-size: 32px;
           margin-bottom: 10px;
+        }
+
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+
+        .dashboard-small-card {
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: 14px;
+          padding: 20px;
+          transition: 0.3s;
+        }
+        
+        .dashboard-small-card:hover {
+          border-color: rgba(0,200,150,0.4);
+          transform: translateY(-3px);
+        }
+
+        .action-btn {
+          background: transparent;
+          border: 1px solid var(--brand-primary);
+          color: var(--brand-primary);
+          padding: 8px 14px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: 0.3s;
+          margin-top: 10px;
+        }
+        
+        .action-btn:hover {
+          background: var(--brand-primary);
+          color: black;
+          box-shadow: 0 0 10px var(--brand-primary);
+        }
+
+        .app-footer {
+          padding: 20px;
+          text-align: center;
+          color: var(--text-dim);
+          border-top: 1px solid var(--glass-border);
+          font-size: 13px;
         }
       `}</style>
     </>
