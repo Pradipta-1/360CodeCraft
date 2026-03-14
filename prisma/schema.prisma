@@ -1,0 +1,171 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  TRAINER
+  ORGANIZER
+  ADMIN
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum TrainerRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum NotificationType {
+  TRAINER_INVITATION_RECEIVED
+  TRAINER_REQUEST_SUBMITTED
+  TRAINER_REQUEST_ACCEPTED
+  EVENT_APPROVED
+  EVENT_REMINDER
+  NEW_MESSAGE
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  role         Role
+  name         String
+  avatarUrl    String?
+  location     String?
+  bio          String?
+
+  isTrainerVerified Boolean? @default(false)
+  certifications    String[] @default([])
+  specializations   String[] @default([])
+  experienceYears   Int?
+  rating            Float?
+  ratingCount       Int      @default(0)
+
+  eventsOrganized   Event[] @relation("OrganizerEvents")
+  eventParticipants Event[] @relation("EventParticipants")
+  trainerEvents     Event[] @relation("TrainerParticipants")
+
+  sentInvitations     TrainerInvitation[] @relation("Inviter")
+  receivedInvitations TrainerInvitation[] @relation("Invitee")
+
+  trainerRequests      TrainerEventRequest[]
+  sentMessages         Message[]             @relation("Sender")
+  receivedMessages     Message[]             @relation("Receiver")
+  notifications        Notification[]
+  relatedNotifications Notification[]        @relation("RelatedUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id               String   @id @default(cuid())
+  title            String
+  sportType        String
+  location         String
+  date             DateTime
+  time             String
+  participantLimit Int
+  description      String
+
+  status            EventStatus @default(PENDING)
+  openToTrainers    Boolean     @default(false)
+  trainersNeeded    Int?
+  trainerConditions String?
+
+  organizerId String
+  organizer   User   @relation("OrganizerEvents", fields: [organizerId], references: [id])
+
+  participants        User[] @relation("EventParticipants")
+  trainerParticipants User[] @relation("TrainerParticipants")
+
+  invitations     TrainerInvitation[]
+  trainerRequests TrainerEventRequest[]
+  messages        Message[]
+  notifications   Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrainerInvitation {
+  id               String           @id @default(cuid())
+  organizerId      String
+  trainerId        String
+  eventId          String
+  paymentOffered   Int
+  currency         String           @default("INR")
+  organizerMessage String
+  status           InvitationStatus @default(PENDING)
+
+  organizer User  @relation("Inviter", fields: [organizerId], references: [id])
+  trainer   User  @relation("Invitee", fields: [trainerId], references: [id])
+  event     Event @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrainerEventRequest {
+  id                 String               @id @default(cuid())
+  trainerId          String
+  eventId            String
+  message            String
+  relevantExperience String
+  status             TrainerRequestStatus @default(PENDING)
+
+  trainer User  @relation(fields: [trainerId], references: [id])
+  event   Event @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id         String  @id @default(cuid())
+  senderId   String
+  receiverId String
+  eventId    String?
+
+  content String
+  read    Boolean @default(false)
+
+  sender   User   @relation("Sender", fields: [senderId], references: [id])
+  receiver User   @relation("Receiver", fields: [receiverId], references: [id])
+  event    Event? @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  userId         String
+  type           NotificationType
+  message        String
+  relatedEventId String?
+  relatedUserId  String?
+  read           Boolean          @default(false)
+
+  user         User   @relation(fields: [userId], references: [id])
+  relatedEvent Event? @relation(fields: [relatedEventId], references: [id])
+  relatedUser  User?  @relation("RelatedUser", fields: [relatedUserId], references: [id])
+
+  createdAt DateTime @default(now())
+}
