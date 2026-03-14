@@ -489,9 +489,12 @@ export default function CommunityFeed() {
             <div key={post.id} className="card bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Post Header */}
               <div className="p-4 flex items-center gap-3 border-b border-slate-800/50">
-                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold overflow-hidden ring-2 ring-emerald-500/20">
+                <div 
+                  className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold overflow-hidden ring-2 ring-emerald-500/20 cursor-pointer flex-shrink-0"
+                  onClick={() => post.user.avatarUrl && setEnlargedImage(post.user.avatarUrl)}
+                >
                   {post.user.avatarUrl ? (
-                    <img src={post.user.avatarUrl} alt={post.user.name} className="w-full h-full object-cover" />
+                    <img src={post.user.avatarUrl} alt={post.user.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
                   ) : (
                     post.user.name.charAt(0).toUpperCase()
                   )}
@@ -572,11 +575,35 @@ export default function CommunityFeed() {
                     ) : commentsByPost[post.id]?.length === 0 ? (
                       <p className="text-slate-500 text-sm italic py-2">No comments yet.</p>
                     ) : (
+<<<<<<< HEAD
                       commentsByPost[post.id]
                         ?.filter(c => !c.parentId)
                         .map(comment => (
                           <CommentItem key={comment.id} comment={comment} postId={post.id} />
                         ))
+=======
+                      commentsByPost[post.id]?.map(comment => (
+                        <div key={comment.id} className="flex gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20 cursor-pointer overflow-hidden"
+                            onClick={() => comment.user.avatarUrl && setEnlargedImage(comment.user.avatarUrl)}
+                          >
+                            {comment.user.avatarUrl ? (
+                              <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover rounded-full hover:opacity-80 transition-opacity" />
+                            ) : (
+                              comment.user.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800/30">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold text-white">{comment.user.name}</span>
+                              <span className="text-[10px] text-slate-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-slate-300">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
                     )}
                   </div>
 

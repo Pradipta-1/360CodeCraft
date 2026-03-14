@@ -4,38 +4,35 @@ import { useEffect, useState } from 'react';
 import UserShell from '@/components/UserShell';
 import { apiFetch } from '@/lib/apiFetch';
 
-type WorkoutPlan = {
+type ActiveRoutine = {
   id: string;
-  title: string;
-  description: string;
-  createdAt: string;
+  days: { day: string; title: string; description: string }[];
   trainer: {
     name: string;
   };
+  createdAt: string;
 };
 
 export default function UserDashboardPage() {
-  const [plans, setPlans] = useState<WorkoutPlan[]>([]);
+  const [activeRoutine, setActiveRoutine] = useState<ActiveRoutine | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadPlans() {
+    async function loadActiveRoutine() {
       try {
-        const res = await apiFetch('/api/workout-plans');
+        const res = await apiFetch('/api/routines?active=true');
         const data = await res.json();
-        if (data.success) {
-          setPlans(data.data);
+        if (data.success && data.data && data.data.length > 0) {
+          setActiveRoutine(data.data[0]);
         }
       } catch (err) {
-        console.error('Failed to load plans:', err);
+        console.error('Failed to load active routine:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadPlans();
+    loadActiveRoutine();
   }, []);
-
-  const latestPlan = plans[0];
 
   return (
     <UserShell>
@@ -47,38 +44,41 @@ export default function UserDashboardPage() {
           </p>
         </div>
 
-        {/* Workout Plan Section */}
+        {/* Active Routine Section */}
         <div className="card">
           <h2 className="card-title" style={{ fontSize: '20px', color: 'var(--brand-primary)' }}>
-            Latest Workout Plan
+            Your Active 7-Day Routine
           </h2>
           {loading ? (
-            <p className="card-subtitle">Loading plan...</p>
-          ) : latestPlan ? (
-            <div style={{ marginTop: '20px' }}>
-              <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '10px' }}>
-                {latestPlan.title}
-              </h3>
-              <p 
-                className="card-subtitle" 
-                style={{ 
-                  whiteSpace: 'pre-wrap', 
-                  background: 'rgba(255,255,255,0.05)', 
-                  padding: '20px', 
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  lineHeight: '1.6'
-                }}
-              >
-                {latestPlan.description}
+            <p className="card-subtitle mt-2">Loading routine...</p>
+          ) : activeRoutine ? (
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-slate-400 mb-6">
+                Assigned by Trainer <span className="font-semibold text-emerald-400">{activeRoutine.trainer?.name || "Unknown"}</span>
               </p>
-              <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginTop: '12px' }}>
-                Assigned by {latestPlan.trainer?.name ? `Trainer ${latestPlan.trainer.name}` : 'You'} on {new Date(latestPlan.createdAt).toLocaleDateString()}
-              </p>
+              <div className="flex flex-col gap-4">
+                {activeRoutine.days.map((d, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-md text-sm font-bold w-14 text-center">
+                        {d.day}
+                      </span>
+                      <h3 className="text-white font-semibold flex-1">
+                        {d.title || "Rest"}
+                      </h3>
+                    </div>
+                    {d.description && (
+                      <p className="text-slate-400 text-sm whitespace-pre-wrap font-mono mt-3 sm:pl-[68px]">
+                        {d.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <p className="card-subtitle" style={{ marginTop: '10px' }}>
-              No workout plans assigned yet. Contact a trainer to get started!
+            <p className="card-subtitle mt-4">
+              No active routine currently. Visit the Trainers tab to request one!
             </p>
           )}
         </div>

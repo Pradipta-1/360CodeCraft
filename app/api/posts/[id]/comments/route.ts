@@ -50,13 +50,18 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Content or image is required" }, { status: 400 });
     }
 
+    const { id: postId } = await params;
+
     const comment = await prisma.comment.create({
       data: {
         content: content?.trim() || "",
         userId: user.id,
         postId: postId,
+<<<<<<< HEAD
         parentId: parentId || null,
         imageUrl: imageUrl || null,
+=======
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
       },
       include: {
         user: {

@@ -32,6 +32,12 @@ enum TrainerRequestStatus {
   REJECTED
 }
 
+enum RoutineRequestStatus {
+  PENDING
+  FULFILLED
+  REJECTED
+}
+
 enum NotificationType {
   TRAINER_INVITATION_RECEIVED
   TRAINER_REQUEST_SUBMITTED
@@ -62,11 +68,17 @@ model User {
   eventParticipants Event[] @relation("EventParticipants")
   trainerEvents     Event[] @relation("TrainerParticipants")
 
-  assignedWorkoutPlans WorkoutPlan[] @relation("ClientPlans")
-  createdWorkoutPlans  WorkoutPlan[] @relation("TrainerPlans")
+  assignedWorkoutPlans   WorkoutPlan[] @relation("ClientPlans")
+  createdWorkoutPlans    WorkoutPlan[] @relation("TrainerPlans")
 
-  sentInvitations     TrainerInvitation[] @relation("Inviter")
-  receivedInvitations TrainerInvitation[] @relation("Invitee")
+  sentTrainerInvitations TrainerInvitation[] @relation("Inviter")
+  receivedInvitations    TrainerInvitation[] @relation("Invitee")
+
+  routineRequestsSent     RoutineRequest[] @relation("UserRoutineRequests")
+  routineRequestsReceived RoutineRequest[] @relation("TrainerRoutineRequests")
+
+  routinesAssigned Routine[] @relation("ClientRoutines")
+  routinesCreated  Routine[] @relation("TrainerRoutines")
 
   trainerRequests      TrainerEventRequest[]
   sentMessages         Message[]             @relation("Sender")
@@ -228,4 +240,33 @@ model WorkoutPlan {
 
   trainer User @relation("TrainerPlans", fields: [trainerId], references: [id])
   client  User @relation("ClientPlans", fields: [clientId], references: [id])
+}
+
+model RoutineRequest {
+  id        String               @id @default(cuid())
+  userId    String
+  trainerId String
+  status    RoutineRequestStatus @default(PENDING)
+
+  user    User @relation("UserRoutineRequests", fields: [userId], references: [id])
+  trainer User @relation("TrainerRoutineRequests", fields: [trainerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, trainerId])
+}
+
+model Routine {
+  id        String  @id @default(cuid())
+  userId    String
+  trainerId String
+  isActive  Boolean @default(false)
+  days      Json // Array of { day: string, title: string, description: string }
+
+  user    User @relation("ClientRoutines", fields: [userId], references: [id])
+  trainer User @relation("TrainerRoutines", fields: [trainerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

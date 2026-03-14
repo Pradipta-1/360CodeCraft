@@ -12,6 +12,7 @@ type Props = {
 
 export default function UserShell({ children }: Props) {
   const pathname = usePathname();
+<<<<<<< HEAD
   const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
@@ -27,6 +28,18 @@ export default function UserShell({ children }: Props) {
       }
     }
     fetchUser();
+=======
+  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
+
+  useEffect(() => {
+    apiFetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUser(data.data);
+      })
+      .catch(() => {});
+
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -93,8 +106,22 @@ export default function UserShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
+<<<<<<< HEAD
           <div className="nav-brand">
             {userName ? `HELLO, TRAINEE ${userName.toUpperCase()}` : "FITNESS PORTAL - USER"}
+=======
+          <div className="nav-brand flex items-center gap-3">
+            {user && (
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs ring-2 ring-emerald-500/10">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
+              </div>
+            )}
+            FITNESS PORTAL - USER
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
           </div>
           <div className="nav-list">
             <Link

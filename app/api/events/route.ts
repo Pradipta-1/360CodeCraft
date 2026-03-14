@@ -18,13 +18,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       include: {
         organizer: {
-          select: { id: true, name: true }
+          select: { id: true, name: true, avatarUrl: true }
         },
         participants: {
-          select: { id: true, name: true }
+          select: { id: true, name: true, avatarUrl: true }
         },
         trainerParticipants: {
-          select: { id: true, name: true }
+          select: { id: true, name: true, avatarUrl: true }
         }
       }
     });

@@ -12,6 +12,7 @@ type Props = {
 
 export default function TrainerShell({ children }: Props) {
   const pathname = usePathname();
+<<<<<<< HEAD
   const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
@@ -27,6 +28,37 @@ export default function TrainerShell({ children }: Props) {
       }
     }
     fetchUser();
+=======
+  const [user, setUser] = useState<{ name: string; avatarUrl?: string | null } | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
+
+  useEffect(() => {
+    // Fetch User
+    apiFetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUser(data.data);
+      })
+      .catch(() => {});
+
+    // Fetch Pending Routine Requests (poll every 10s to keep ping updated)
+    const fetchRequests = () => {
+      apiFetch('/api/routines/requests')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const pendingCount = data.data.filter((r: any) => r.status === "PENDING").length;
+            setPendingRequests(pendingCount);
+          }
+        })
+        .catch(() => {});
+    };
+    
+    fetchRequests();
+    const interval = setInterval(fetchRequests, 10000);
+
+
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -83,6 +115,7 @@ export default function TrainerShell({ children }: Props) {
 
     return () => {
       window.clearTimeout(firstTimeout);
+      clearInterval(interval);
       if (shootingCleanup) shootingCleanup();
     };
   }, []);
@@ -93,8 +126,22 @@ export default function TrainerShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
+<<<<<<< HEAD
           <div className="nav-brand">
             {userName ? `HELLO, TRAINER ${userName.toUpperCase()}` : "FITNESS PORTAL - TRAINER"}
+=======
+          <div className="nav-brand flex items-center gap-3">
+            {user && (
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 bg-slate-800 flex items-center justify-center text-emerald-400 font-bold text-xs ring-2 ring-emerald-500/10">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
+              </div>
+            )}
+            FITNESS PORTAL - TRAINER
+>>>>>>> 5d42e963bfa63b64566e9c28def3bbfb2c57e985
           </div>
           <div className="nav-list">
             <Link
@@ -105,9 +152,12 @@ export default function TrainerShell({ children }: Props) {
             </Link>
             <Link
               href="/trainer/clients"
-              className={`nav-item${pathname === "/trainer/clients" ? " active" : ""}`}
+              className={`nav-item flex items-center gap-2 ${pathname === "/trainer/clients" ? " active" : ""}`}
             >
               Clients
+              {pendingRequests > 0 && (
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
+              )}
             </Link>
             <Link
               href="/trainer/events"
