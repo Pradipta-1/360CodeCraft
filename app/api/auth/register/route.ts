@@ -1,0 +1,62 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { hashPassword, signToken } from "@/lib/auth";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { email, password, role, name } = body ?? {};
+
+  if (!email || !password || !role || !name) {
+    return NextResponse.json(
+      { success: false, error: "Missing required fields" },
+      { status: 400 }
+    );
+  }
+
+  const normalizedRole = String(role).toUpperCase();
+  const allowedRoles = ["USER", "TRAINER", "ORGANIZER", "ADMIN"] as const;
+
+  if (!allowedRoles.includes(normalizedRole as (typeof allowedRoles)[number])) {
+    return NextResponse.json(
+      { success: false, error: "Invalid role" },
+      { status: 400 }
+    );
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return NextResponse.json(
+      { success: false, error: "Email already registered" },
+      { status: 400 }
+    );
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash,
+      role: normalizedRole,
+      name
+    }
+  });
+
+  const token = signToken({ userId: user.id, role: user.role });
+
+  const res = NextResponse.json({
+    success: true,
+    data: { id: user.id, email: user.email, role: user.role, name: user.name }
+  });
+
+  res.cookies.set("auth_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/"
+  });
+
+  return res;
+}
+
