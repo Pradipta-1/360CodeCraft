@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     if (!threadsMap.has(otherId)) {
       threadsMap.set(otherId, {
         userId: otherId,
-        lastMessage: m.content,
+        lastMessage: m.content || (m.imageUrl ? "Sent an image" : ""),
         updatedAt: m.createdAt
       });
     }

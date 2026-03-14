@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import MessagesView from "@/components/MessagesView";
 
 export default function OrganizerMessagesPage() {
@@ -7,7 +8,9 @@ export default function OrganizerMessagesPage() {
       <p className="text-sm text-slate-400">
         Coordinate with trainers and participants. Select a conversation below.
       </p>
-      <MessagesView />
+      <Suspense fallback={<div className="p-4 text-slate-400">Loading messages...</div>}>
+        <MessagesView />
+      </Suspense>
     </div>
   );
 }

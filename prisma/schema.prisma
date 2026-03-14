@@ -62,6 +62,9 @@ model User {
   eventParticipants Event[] @relation("EventParticipants")
   trainerEvents     Event[] @relation("TrainerParticipants")
 
+  assignedWorkoutPlans WorkoutPlan[] @relation("ClientPlans")
+  createdWorkoutPlans  WorkoutPlan[] @relation("TrainerPlans")
+
   sentInvitations     TrainerInvitation[] @relation("Inviter")
   receivedInvitations TrainerInvitation[] @relation("Invitee")
 
@@ -145,6 +148,7 @@ model Message {
   eventId    String?
 
   content String
+  imageUrl String?
   read    Boolean @default(false)
 
   sender   User   @relation("Sender", fields: [senderId], references: [id])
@@ -168,4 +172,17 @@ model Notification {
   relatedUser  User?  @relation("RelatedUser", fields: [relatedUserId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model WorkoutPlan {
+  id          String   @id @default(cuid())
+  trainerId   String
+  clientId    String
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  trainer User @relation("TrainerPlans", fields: [trainerId], references: [id])
+  client  User @relation("ClientPlans", fields: [clientId], references: [id])
 }

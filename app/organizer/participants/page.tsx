@@ -1,10 +1,12 @@
 export default function OrganizerParticipantsPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-50">Participants</h1>
-      <p className="text-sm text-slate-400">
-        Participant lists for your events will appear here in the full build.
-      </p>
+    <div id="participants" className="tab-pane active">
+      <div className="card">
+        <h1 className="card-title">Participants</h1>
+        <p className="card-subtitle">
+          Participant lists for your events will appear here in the full build.
+        </p>
+      </div>
     </div>
   );
 }

@@ -47,11 +47,13 @@ export default function LoginPage() {
 
     function triggerShootingStar() {
       if (cancelled) return;
+      const c = starContainerRef.current;
+      if (!c) return;
       const shooter = document.createElement("div");
       shooter.className = "shooting-star";
       shooter.style.left = Math.random() * 80 + "%";
       shooter.style.top = Math.random() * 40 + "%";
-      container.appendChild(shooter);
+      c.appendChild(shooter);
       timeouts.push(setTimeout(() => shooter.remove(), 3000));
       timeouts.push(setTimeout(triggerShootingStar, Math.random() * 4000 + 3000));
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Thread = {
@@ -14,6 +14,7 @@ type Message = {
   senderId: string;
   receiverId: string;
   content: string;
+  imageUrl?: string | null;
   createdAt: string;
 };
 
@@ -30,6 +31,12 @@ export default function MessagesView() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchThreads = useCallback(async () => {
     setLoadingThreads(true);
@@ -96,19 +103,38 @@ export default function MessagesView() {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedUserId || !newContent.trim()) return;
+    if (!selectedUserId || (!newContent.trim() && !selectedFile)) return;
     setSending(true);
     setError(null);
     try {
+      let uploadedImageUrl: string | null = null;
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const upRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const upData = await upRes.json();
+        if (!upRes.ok || !upData.success) throw new Error(upData.error || "Failed to upload image");
+        uploadedImageUrl = upData.url;
+      }
+
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ receiverId: selectedUserId, content: newContent.trim() })
+        body: JSON.stringify({ 
+          receiverId: selectedUserId, 
+          content: newContent.trim(),
+          imageUrl: uploadedImageUrl
+        })
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to send");
+      
       setNewContent("");
+      removeFile();
       setMessages(prev => [...prev, data.data]);
       await fetchThreads();
     } catch (e) {
@@ -116,6 +142,38 @@ export default function MessagesView() {
     } finally {
       setSending(false);
     }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+                setSelectedFile(file);
+                const url = URL.createObjectURL(file);
+                setPreviewUrl(url);
+                e.preventDefault();
+                break;
+            }
+        }
+    }
+  }
+
+  function removeFile() {
+    setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   const selectedThread = threads.find(t => t.partner?.id === selectedUserId);
@@ -196,7 +254,18 @@ export default function MessagesView() {
                             : "bg-slate-700 text-slate-100"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                        {m.imageUrl && (
+                          <div className="mb-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img 
+                              src={m.imageUrl} 
+                              alt="Attached image" 
+                              className="max-h-64 rounded-md object-contain cursor-pointer transition-opacity hover:opacity-90" 
+                              onClick={() => setEnlargedImage(m.imageUrl!)}
+                            />
+                          </div>
+                        )}
+                        {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
                         <p
                           className={`mt-1 text-xs ${
                             isOwn ? "text-emerald-200" : "text-slate-400"
@@ -212,23 +281,58 @@ export default function MessagesView() {
             </div>
             <form
               onSubmit={handleSend}
-              className="flex gap-2 border-t border-slate-800 p-3"
+              className="flex flex-col gap-2 border-t border-slate-800 p-3"
             >
-              <input
-                type="text"
-                value={newContent}
-                onChange={e => setNewContent(e.target.value)}
-                placeholder="Type a message…"
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
-                disabled={sending}
-              />
-              <button
-                type="submit"
-                disabled={sending || !newContent.trim()}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-slate-50 hover:bg-emerald-500 disabled:opacity-50"
-              >
-                {sending ? "Sending…" : "Send"}
-              </button>
+              {previewUrl && (
+                <div className="relative inline-block w-max rounded-md bg-slate-800 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt="Preview" className="h-20 w-auto rounded object-cover" />
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white hover:bg-red-500"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2 items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                  title="Attach Image"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </button>
+                <input
+                  type="text"
+                  value={newContent}
+                  onChange={e => setNewContent(e.target.value)}
+                  onPaste={handlePaste}
+                  placeholder="Type a message or paste an image (Ctrl+V)…"
+                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                  disabled={sending}
+                />
+                <button
+                  type="submit"
+                  disabled={sending || (!newContent.trim() && !selectedFile)}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-slate-50 hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {sending ? "Sending…" : "Send"}
+                </button>
+              </div>
             </form>
           </>
         ) : (
@@ -242,6 +346,33 @@ export default function MessagesView() {
           </div>
         )}
       </section>
+
+      {/* Image Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div 
+            className="relative flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition-colors focus:outline-none ring-1 ring-slate-700/50"
+              title="Close image"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={enlargedImage} 
+              alt="Enlarged attached image" 
+              className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

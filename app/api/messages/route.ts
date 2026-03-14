@@ -12,11 +12,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { receiverId, content, eventId } = body ?? {};
+  const { receiverId, content, imageUrl, eventId } = body ?? {};
 
-  if (!receiverId || !content) {
+  if (!receiverId || (!content && !imageUrl)) {
     return NextResponse.json(
-      { success: false, error: "Missing fields" },
+      { success: false, error: "Missing content or image" },
       { status: 400 }
     );
   }
@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
     data: {
       senderId: user.id,
       receiverId,
-      content,
+      content: content || "",
+      imageUrl: imageUrl || null,
       eventId
     }
   });

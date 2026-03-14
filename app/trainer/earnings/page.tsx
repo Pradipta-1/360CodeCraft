@@ -1,10 +1,12 @@
 export default function TrainerEarningsPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-50">Earnings</h1>
-      <p className="text-sm text-slate-400">
-        Accepted event invitations and payment details will be summarized here.
-      </p>
+    <div id="earnings" className="tab-pane active">
+      <div className="card">
+        <h1 className="card-title">Earnings</h1>
+        <p className="card-subtitle">
+          Accepted event invitations and payment details will be summarized here.
+        </p>
+      </div>
     </div>
   );
 }

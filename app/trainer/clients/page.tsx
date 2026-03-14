@@ -32,50 +32,54 @@ export default function TrainerClientsPage() {
   }, []);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-50">Clients</h1>
-      <p className="text-sm text-slate-400">
-        Clients you are in touch with. You can only reply to conversations
-        started by them — open a thread below to continue the chat.
-      </p>
-      {error && (
-        <p className="text-sm text-red-400">{error}</p>
-      )}
-      {loading ? (
-        <p className="text-sm text-slate-400">Loading…</p>
-      ) : threads.length === 0 ? (
-        <p className="text-sm text-slate-400">
-          No client conversations yet. Clients will appear here after they
-          message you first.
+    <div id="clients" className="tab-pane active">
+      <div className="card">
+        <h1 className="card-title">Clients</h1>
+        <p className="card-subtitle mb-6">
+          Clients you are in touch with. You can only reply to conversations
+          started by them — open a thread below to continue the chat.
         </p>
-      ) : (
-        <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
-          {threads.map((t, index) => {
-            const id = t.partner?.id;
-            const name = t.partner?.name ?? "Unknown";
-            if (!id) return null;
-            return (
-              <li
-                key={`${id}-${index}`}
-                className="flex items-center justify-between px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium text-slate-50">{name}</p>
-                  <p className="truncate text-xs text-slate-400 max-w-[280px]">
-                    {t.lastMessage}
-                  </p>
-                </div>
-                <Link
-                  href={`/trainer/messages?with=${id}`}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-slate-50 hover:bg-emerald-500"
+
+        {error && (
+          <p className="text-sm text-red-400 mb-4">{error}</p>
+        )}
+        
+        {loading ? (
+          <p className="card-subtitle">Loading…</p>
+        ) : threads.length === 0 ? (
+          <p className="card-subtitle">
+            No client conversations yet. Clients will appear here after they
+            message you first.
+          </p>
+        ) : (
+          <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-[#0a0a0c]">
+            {threads.map((t, index) => {
+              const id = t.partner?.id;
+              const name = t.partner?.name ?? "Unknown";
+              if (!id) return null;
+              return (
+                <li
+                  key={`${id}-${index}`}
+                  className="flex items-center justify-between px-4 py-4 hover:bg-white/5 transition-colors"
                 >
-                  Open conversation
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  <div>
+                    <p className="font-medium text-white">{name}</p>
+                    <p className="truncate text-sm text-slate-400 max-w-[280px]">
+                      {t.lastMessage}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/trainer/messages?with=${id}`}
+                    className="rounded-lg bg-[#00c896] px-4 py-2 text-sm font-semibold text-white hover:bg-[#00a87a] transition-colors"
+                  >
+                    Open conversation
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

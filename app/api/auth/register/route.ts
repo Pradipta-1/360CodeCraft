@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken } from "@/lib/auth";
+import { Role } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     data: {
       email,
       passwordHash,
-      role: normalizedRole,
+      role: normalizedRole as Role,
       name
     }
   });

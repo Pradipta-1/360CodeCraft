@@ -1,7 +1,24 @@
+'use client';
+
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function UserLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // Let the new full-screen user shell handle these routes
+  if (
+    pathname === "/user/dashboard" ||
+    pathname === "/user/events" ||
+    pathname === "/user/trainers" ||
+    pathname === "/user/clients" ||
+    pathname === "/user/community" ||
+    pathname === "/user/messages"
+  ) {
+    return <>{children}</>;
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto flex max-w-6xl gap-8 px-4 py-6">

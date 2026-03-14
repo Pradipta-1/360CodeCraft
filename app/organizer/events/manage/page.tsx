@@ -6,25 +6,29 @@ export default async function OrganizerManageEventsPage() {
   const events = data?.data ?? [];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-50">Manage Events</h1>
-      <p className="text-sm text-slate-400">
-        Your created events and their approval status will appear here.
-      </p>
-      <div className="space-y-2 text-sm text-slate-300">
-        {events.length === 0 && <p>No events to manage yet.</p>}
-        {events.map((e: any) => (
-          <div
-            key={e.id}
-            className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2"
-          >
-            <p className="font-semibold text-slate-50">{e.title}</p>
-            <p className="text-xs text-slate-400">
-              {e.sportType} · {e.location}
-            </p>
-            <p className="text-xs text-yellow-400">Status: {e.status}</p>
-          </div>
-        ))}
+    <div id="manage-events" className="tab-pane active">
+      <div className="card">
+        <h1 className="card-title">Manage Events</h1>
+        <p className="card-subtitle mb-6">
+          Your created events and their approval status will appear here.
+        </p>
+        <div className="space-y-4 text-sm text-slate-300">
+          {events.length === 0 && <p className="card-subtitle">No events to manage yet.</p>}
+          {events.map((e: any) => (
+            <div
+              key={e.id}
+              className="rounded-xl border border-slate-800 bg-[#0a0a0c] px-4 py-4 hover:border-[#00c896]/30 transition-colors"
+            >
+              <p className="text-lg font-semibold text-white">{e.title}</p>
+              <p className="text-sm text-slate-400 mt-1 mb-2">
+                {e.sportType} · {e.location}
+              </p>
+              <span className="inline-block rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400 border border-yellow-500/20">
+                Status: {e.status}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
