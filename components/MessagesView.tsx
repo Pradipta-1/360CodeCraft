@@ -397,14 +397,14 @@ export default function MessagesView() {
                             <span className="text-[10px] text-yellow-400" title="Group Leader">👑</span>
                           )}
                           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                            {m.sender.name}
+                            {m.sender?.name || 'Unknown'}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter ${
-                            m.sender.role === "TRAINER" 
+                            m.sender?.role === "TRAINER" 
                               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
                               : "bg-slate-800 text-slate-500"
                           }`}>
-                            {m.sender.role}
+                            {m.sender?.role === 'USER' ? 'TRAINEE' : (m.sender?.role || 'USER')}
                           </span>
                         </div>
                       )}
