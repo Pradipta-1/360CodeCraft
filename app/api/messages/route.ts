@@ -14,13 +14,59 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { receiverId, content, imageUrl, eventId } = body ?? {};
 
-  if (!receiverId || (!content && !imageUrl)) {
+  if (!eventId && !receiverId) {
+    return NextResponse.json(
+      { success: false, error: "Receiver or Event ID is required" },
+      { status: 400 }
+    );
+  }
+
+  if (!content && !imageUrl) {
     return NextResponse.json(
       { success: false, error: "Missing content or image" },
       { status: 400 }
     );
   }
 
+  // Handle Event Group Message
+  if (eventId) {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        participants: { select: { id: true } },
+        trainerParticipants: { select: { id: true } }
+      }
+    });
+
+    if (!event) {
+      return NextResponse.json({ success: false, error: "Event not found" }, { status: 404 });
+    }
+
+    const isParticipant = 
+      event.organizerId === user.id ||
+      event.participants.some(p => p.id === user.id) ||
+      event.trainerParticipants.some(p => p.id === user.id);
+
+    if (!isParticipant) {
+      return NextResponse.json({ success: false, error: "You are not a participant of this event group." }, { status: 403 });
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        senderId: user.id,
+        receiverId: null,
+        content: content || "",
+        imageUrl: imageUrl || null,
+        eventId: eventId
+      }
+    });
+
+    // Notify other participants? (Optional, can be complex for large groups, skipping for now as per minimal change rule unless necessary)
+    
+    return NextResponse.json({ success: true, data: message });
+  }
+
+  // Handle Direct Message
   if (receiverId === user.id) {
     return NextResponse.json(
       { success: false, error: "You cannot message yourself." },
@@ -55,8 +101,7 @@ export async function POST(req: NextRequest) {
       senderId: user.id,
       receiverId,
       content: content || "",
-      imageUrl: imageUrl || null,
-      eventId
+      imageUrl: imageUrl || null
     }
   });
 
@@ -65,7 +110,6 @@ export async function POST(req: NextRequest) {
       userId: receiverId,
       type: "NEW_MESSAGE",
       message: "You received a new message.",
-      relatedEventId: eventId,
       relatedUserId: user.id
     }
   });

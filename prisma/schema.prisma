@@ -93,12 +93,15 @@ model Event {
   title            String
   sportType        String
   location         String
-  date             DateTime
-  time             String
+  date             DateTime? // Made optional in favor of ranges if provided
+  startDate        DateTime?
+  endDate          DateTime?
+  time             String?
+  timeRange        String?
   participantLimit Int
   description      String
 
-  status            EventStatus @default(PENDING)
+  status            EventStatus @default(APPROVED) // Defaulting to approved for now as per user request (trainer creation)
   openToTrainers    Boolean     @default(false)
   trainersNeeded    Int?
   trainerConditions String?
@@ -154,15 +157,16 @@ model TrainerEventRequest {
 model Message {
   id         String  @id @default(cuid())
   senderId   String
-  receiverId String
+  receiverId String?
   eventId    String?
 
   content String
   imageUrl String?
   read    Boolean @default(false)
+  isSystem Boolean @default(false)
 
   sender   User   @relation("Sender", fields: [senderId], references: [id])
-  receiver User   @relation("Receiver", fields: [receiverId], references: [id])
+  receiver User?  @relation("Receiver", fields: [receiverId], references: [id])
   event    Event? @relation(fields: [eventId], references: [id])
 
   createdAt DateTime @default(now())
