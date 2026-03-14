@@ -2,8 +2,9 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { apiFetch } from '@/lib/apiFetch';
 
 type Props = {
   children: ReactNode;
@@ -11,8 +12,21 @@ type Props = {
 
 export default function TrainerShell({ children }: Props) {
   const pathname = usePathname();
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await apiFetch("/api/auth/me");
+        const data = await res.json();
+        if (data.success && data.data.name) {
+          setUserName(data.data.name);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user in side shell:", err);
+      }
+    }
+    fetchUser();
     function createStarfield() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -79,7 +93,9 @@ export default function TrainerShell({ children }: Props) {
 
       <div className="app-container">
         <nav className="top-nav">
-          <div className="nav-brand">FITNESS PORTAL - TRAINER</div>
+          <div className="nav-brand">
+            {userName ? `HELLO, TRAINER ${userName.toUpperCase()}` : "FITNESS PORTAL - TRAINER"}
+          </div>
           <div className="nav-list">
             <Link
               href="/trainer/dashboard"

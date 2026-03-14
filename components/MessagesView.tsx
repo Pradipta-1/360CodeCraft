@@ -335,7 +335,7 @@ export default function MessagesView() {
                       return (
                         <div key={p.id} className="flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                           <div className="flex items-center gap-3">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${isLeader ? "bg-yellow-400 text-black" : "bg-slate-800 text-slate-400"}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isLeader ? "bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]" : "bg-slate-800 text-slate-400"}`}>
                               {isLeader ? "👑" : p.name?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">
@@ -394,7 +394,7 @@ export default function MessagesView() {
                       {isEventGroup && !isOwn && (
                         <div className="flex items-center gap-2 mb-1 ml-3">
                           {isLeader && (
-                            <span className="text-[10px] text-yellow-400" title="Group Leader">👑</span>
+                            <span className="text-sm text-yellow-400 drop-shadow-sm" title="Group Leader text-shadow">👑</span>
                           )}
                           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
                             {m.sender?.name || 'Unknown'}

@@ -4,10 +4,10 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const { id: postId } = await params;
 
     const comments = await prisma.comment.findMany({
       where: { postId },
@@ -36,24 +36,27 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: postId } = await params;
     const user = await getUserFromRequest(req);
     if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content } = await req.json();
-    if (!content || !content.trim()) {
-      return NextResponse.json({ success: false, error: "Content is required" }, { status: 400 });
+    const { content, parentId, imageUrl } = await req.json();
+    if (!content && !imageUrl) {
+      return NextResponse.json({ success: false, error: "Content or image is required" }, { status: 400 });
     }
 
     const comment = await prisma.comment.create({
       data: {
-        content: content.trim(),
+        content: content?.trim() || "",
         userId: user.id,
-        postId: params.id,
+        postId: postId,
+        parentId: parentId || null,
+        imageUrl: imageUrl || null,
       },
       include: {
         user: {
