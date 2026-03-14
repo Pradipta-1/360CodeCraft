@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
           select: { id: true, name: true }
         },
         participants: {
-          select: { id: true }
+          select: { id: true, name: true }
         },
         trainerParticipants: {
-          select: { id: true }
+          select: { id: true, name: true }
         }
       }
     });
@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     // Map events to include participation status for the current user
     const formattedEvents = events.map(event => ({
       ...event,
+      isOrganizer: user ? event.organizerId === user.id : false,
       isParticipating: user ? (
         event.participants.some(p => p.id === user.id) || 
         event.trainerParticipants.some(p => p.id === user.id)
@@ -46,13 +47,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  let body: any;
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    try {
+      body = await req.json();
+    } catch (e) {
+      return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+    }
+
     const { 
       title, 
       sportType, 
@@ -91,9 +98,16 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: event });
-  } catch (error) {
-    console.error("Error creating event:", error);
-    return NextResponse.json({ success: false, error: "Failed to create event" }, { status: 500 });
+  } catch (error: any) {
+    console.error("DETAILED ERROR creating event:", {
+      message: error.message,
+      stack: error.stack,
+      body: typeof body !== 'undefined' ? body : 'body not parsed'
+    });
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || "Failed to create event" 
+    }, { status: 500 });
   }
 }
 

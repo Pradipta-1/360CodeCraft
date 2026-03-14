@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = { params: Promise<{ eventId: string }> };
 
 export async function GET(_req: NextRequest, context: RouteContext) {
   const params = await context.params;
   const event = await prisma.event.findUnique({
-    where: { id: params.id },
+    where: { id: params.eventId },
     include: {
       organizer: { select: { id: true, name: true } },
+      participants: { select: { id: true, name: true } },
       trainerParticipants: { select: { id: true, name: true } }
     }
   });
@@ -22,4 +23,3 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
   return NextResponse.json({ success: true, data: event });
 }
-

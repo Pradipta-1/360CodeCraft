@@ -15,9 +15,10 @@ type Event = {
   participantLimit: number;
   description: string;
   isParticipating: boolean;
+  isOrganizer: boolean;
   organizer: { id: string; name: string };
-  participants: { id: string }[];
-  trainerParticipants: { id: string }[];
+  participants: { id: string; name: string }[];
+  trainerParticipants: { id: string; name: string }[];
 };
 
 type Props = {
@@ -29,6 +30,7 @@ export default function EventsView({ role }: Props) {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [viewingParticipants, setViewingParticipants] = useState<Event | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -167,7 +169,14 @@ export default function EventsView({ role }: Props) {
                     )}
                   </div>
 
-                  {event.isParticipating ? (
+                  {event.isOrganizer ? (
+                    <button
+                      onClick={() => setViewingParticipants(event)}
+                      className="px-6 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold rounded-xl border border-emerald-500/30 transition-all"
+                    >
+                      View Participants
+                    </button>
+                  ) : event.isParticipating ? (
                     <div className="px-4 py-2 bg-emerald-500/20 text-emerald-400 font-bold rounded-xl border border-emerald-500/30 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -187,6 +196,63 @@ export default function EventsView({ role }: Props) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Participant List View for Organizers */}
+      {viewingParticipants && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <div>
+                <h2 className="text-xl font-bold text-white">{viewingParticipants.title}</h2>
+                <p className="text-sm text-slate-400">Participant List</p>
+              </div>
+              <button onClick={() => setViewingParticipants(null)} className="text-slate-400 hover:text-white transition-colors p-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3 custom-scrollbar">
+              {viewingParticipants.participants.length === 0 && viewingParticipants.trainerParticipants.length === 0 ? (
+                <p className="text-center text-slate-500 py-8 italic">No participants have joined yet.</p>
+              ) : (
+                <>
+                  {viewingParticipants.trainerParticipants.map(tp => (
+                    <div key={tp.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-emerald-500/20 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xs">
+                          {tp.name.charAt(0)}
+                        </div>
+                        <span className="text-white font-medium">{tp.name}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-400 uppercase tracking-tighter">Trainer</span>
+                    </div>
+                  ))}
+                  {viewingParticipants.participants.map(p => (
+                    <div key={p.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs">
+                          {p.name.charAt(0)}
+                        </div>
+                        <span className="text-white font-medium">{p.name}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Participant</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <div className="p-6 bg-slate-900/50 border-t border-slate-800 flex justify-end">
+              <button 
+                onClick={() => setViewingParticipants(null)}
+                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

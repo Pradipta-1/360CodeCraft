@@ -37,6 +37,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const messages = await prisma.message.findMany({
       where: { eventId: otherId },
+      include: {
+        sender: {
+          select: { id: true, name: true }
+        }
+      },
       orderBy: { createdAt: "asc" }
     });
 

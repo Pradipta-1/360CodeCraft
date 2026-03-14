@@ -15,6 +15,7 @@ type Thread = {
 type Message = {
   id: string;
   senderId: string;
+  sender: { id: string; name: string };
   receiverId?: string | null;
   eventId?: string | null;
   content: string;
@@ -29,6 +30,7 @@ export default function MessagesView() {
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const [partnerNameOverride, setPartnerNameOverride] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newContent, setNewContent] = useState("");
@@ -75,6 +77,13 @@ export default function MessagesView() {
 
   useEffect(() => {
     fetchThreads();
+    // Fetch current user profile
+    apiFetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setCurrentUser(data.data);
+      })
+      .catch(() => {});
   }, [fetchThreads]);
 
   // Open conversation from URL ?with=userId
@@ -296,12 +305,17 @@ export default function MessagesView() {
                     );
                   }
 
-                  const isOwn = m.senderId !== selectedUserId;
+                  const isOwn = currentUser ? m.senderId === currentUser.id : m.senderId !== selectedUserId;
                   return (
                     <div
                       key={m.id}
-                      className={`flex ${isOwn ? "justify-end" : "justify-start animate-in slide-in-from-left-2 duration-300"}`}
+                      className={`flex flex-col ${isOwn ? "items-end" : "items-start animate-in slide-in-from-left-2 duration-300"}`}
                     >
+                      {isEventGroup && !isOwn && (
+                        <span className="text-[10px] font-bold text-emerald-400 ml-3 mb-1 uppercase tracking-wider">
+                          {m.sender.name}
+                        </span>
+                      )}
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-lg ${
                           isOwn
