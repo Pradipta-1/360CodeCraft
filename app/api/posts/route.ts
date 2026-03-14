@@ -4,8 +4,11 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const user = await getUserFromRequest(req);
+    const userId = user?.id;
+
     const posts = await prisma.post.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -17,11 +20,28 @@ export async function GET() {
             role: true,
           },
         },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+        likes: userId ? {
+          where: { userId: userId },
+          select: { id: true },
+        } : false,
       },
     });
 
+    const formattedPosts = posts.map((post: any) => ({
+      ...post,
+      likesCount: post._count.likes,
+      commentsCount: post._count.comments,
+      isLikedByMe: post.likes ? post.likes.length > 0 : false,
+    }));
+
     return NextResponse.json(
-      { success: true, data: posts },
+      { success: true, data: formattedPosts },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {

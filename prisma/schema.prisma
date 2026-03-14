@@ -74,6 +74,8 @@ model User {
   notifications        Notification[]
   relatedNotifications Notification[]        @relation("RelatedUser")
   posts                Post[]
+  likes               Like[]
+  comments            Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -85,6 +87,29 @@ model Post {
   user      User     @relation(fields: [userId], references: [id])
   content   String?
   imageUrl  String?
+  createdAt DateTime @default(now())
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
   createdAt DateTime @default(now())
 }
 
