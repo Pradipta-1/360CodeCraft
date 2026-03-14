@@ -100,6 +100,12 @@ export default function TrainerShell({ children }: Props) {
               Events
             </Link>
             <Link
+              href="/trainer/community"
+              className={`nav-item${pathname === "/trainer/community" ? " active" : ""}`}
+            >
+              Community
+            </Link>
+            <Link
               href="/trainer/messages"
               className={`nav-item${pathname === "/trainer/messages" ? " active" : ""}`}
             >

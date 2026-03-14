@@ -112,6 +112,12 @@ export default function OrganizerShell({ children }: Props) {
               Participants
             </Link>
             <Link
+              href="/organizer/community"
+              className={`nav-item${pathname === '/organizer/community' ? ' active' : ''}`}
+            >
+              Community
+            </Link>
+            <Link
               href="/organizer/messages"
               className={`nav-item${pathname === '/organizer/messages' ? ' active' : ''}`}
             >

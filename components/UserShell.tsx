@@ -99,13 +99,13 @@ export default function UserShell({ children }: Props) {
             >
               Trainers
             </Link>
-
             <Link
               href="/user/community"
               className={`nav-item${pathname === '/user/community' ? ' active' : ''}`}
             >
               Community
             </Link>
+
             <Link
               href="/user/messages"
               className={`nav-item${pathname === '/user/messages' ? ' active' : ''}`}
