@@ -47,14 +47,18 @@ body {
 }
 
 .landing-logo-icon {
-  font-size: 3rem;
+  /* SVG logo */
 }
 
 .landing-logo-text {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #00c896;
+  background: linear-gradient(45deg, #00c896, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: 'Arial Black', sans-serif;
 }
 
 .landing-hero-title {
@@ -218,13 +222,17 @@ body {
 }
 
 .auth-logo-icon {
-  font-size: 2rem;
+  /* SVG logo */
 }
 
 .auth-logo-text {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #00c896;
+  background: linear-gradient(45deg, #00c896, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: 'Arial Black', sans-serif;
 }
 
 .auth-tabs {

@@ -195,12 +195,16 @@ export default function LoginPage() {
           margin-bottom: 20px;
         }
         .login-logo-icon {
-          font-size: 1.5rem;
+          /* SVG logo */
         }
         .login-logo-text {
           font-size: 1.4rem;
           font-weight: bold;
-          color: #00c896;
+          background: linear-gradient(45deg, #00c896, #ff6b6b);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-family: 'Arial Black', sans-serif;
         }
         .login-title {
           font-size: 34px;
@@ -288,7 +292,18 @@ export default function LoginPage() {
 
         <div className="login-container">
           <div className="login-logo">
-            <span className="login-logo-icon">🏋️‍♂️</span>
+            <div className="login-logo-icon">
+              <svg width="30" height="30" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="30" r="28" fill="url(#gradient)" stroke="#00c896" strokeWidth="2"/>
+                <text x="30" y="38" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial Black">FC</text>
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor:'#00c896'}}/>
+                    <stop offset="100%" style={{stopColor:'#ff6b6b'}}/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
             <h2 className="login-logo-text">FitConnect</h2>
           </div>
           <h1 className="login-title">Welcome Back</h1>

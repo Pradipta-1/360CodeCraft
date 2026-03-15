@@ -286,9 +286,13 @@ export default function TrainerShell({ children }: Props) {
 
         .nav-brand {
           font-size: 16px;
-          color: var(--brand-primary);
+          background: linear-gradient(45deg, #00c896, #ff6b6b);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
           letter-spacing: 2px;
           font-weight: 700;
+          font-family: 'Arial Black', sans-serif;
         }
 
         .nav-list {
