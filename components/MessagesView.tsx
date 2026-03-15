@@ -372,7 +372,9 @@ export default function MessagesView() {
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Manage Participants</p>
                   </div>
                   <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                    {participants.map(p => {
+                  {participants
+                    .filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
+                    .map(p => {
                       const isLeader = p.id === eventOrganizerId;
                       return (
                         <div key={p.id} className="flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">

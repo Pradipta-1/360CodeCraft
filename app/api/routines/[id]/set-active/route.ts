@@ -25,16 +25,24 @@ export async function POST(
 
     // Wrap in transaction to ensure consistency
     await prisma.$transaction(async (tx) => {
-      // 1. Set all other routines for this user to inactive
+      // 1. Deactivate all other routines for this user - ONLY set isActive to false,
+      //    DO NOT change isArchived so other trainers' routines stay in their own state
       await tx.routine.updateMany({
-        where: { userId: user.id },
-        data: { isActive: false },
+        where: { 
+          userId: user.id,
+          id: { not: routineId }
+        },
+        data: { 
+          isActive: false
+          // Note: isArchived is intentionally NOT touched here
+        },
       });
 
       // 2. Set this routine to active
       await tx.routine.update({
         where: { id: routineId },
-        data: { isActive: true },
+        // @ts-ignore - Prisma type issue on this environment
+        data: { isActive: true, isArchived: false },
       });
     });
 

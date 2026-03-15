@@ -13,32 +13,36 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    // Reactivate the routine
-    const routine = await prisma.routine.update({
-      where: { 
-        id,
-        trainerId: user.id 
+    // Find routine by id first, then verify ownership
+    const existingRoutine = await prisma.routine.findFirst({
+      where: { id }
+    });
+
+    if (!existingRoutine || existingRoutine.trainerId !== user.id) {
+      return NextResponse.json({ success: false, error: "Routine not found or you do not have permission." }, { status: 404 });
+    }
+
+    // Deactivate all other routines for this user.
+    // ONLY set isActive to false - do NOT change isArchived
+    // so other trainers' routines stay in their own state.
+    await prisma.routine.updateMany({
+      where: {
+        userId: existingRoutine.userId,
+        id: { not: id }
       },
+      data: {
+        isActive: false
+      }
+    });
+
+    // Set THIS routine to active so trainer immediately sees "Edit Routine"
+    // @ts-ignore - Prisma type issue on this environment
+    const routine = await prisma.routine.update({
+      where: { id },
       data: {
         isActive: true,
         // @ts-ignore - Prisma type issue on this environment
         isArchived: false
-      }
-    });
-
-    // Also ensure any other active routine for this client/trainer is archived
-    // (Though usually only one exists, this maintains integrity)
-    // @ts-ignore - Prisma type issue on this environment
-    await prisma.routine.updateMany({
-      where: {
-        userId: routine.userId,
-        trainerId: user.id,
-        id: { not: id },
-        isActive: true
-      },
-      data: {
-        isActive: false,
-        isArchived: true
       }
     });
 

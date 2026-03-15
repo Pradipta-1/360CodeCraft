@@ -169,9 +169,12 @@ export default function TrainerDashboardPage() {
               onChange={(e) => setSelectedClientId(e.target.value)}
               className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-all cursor-pointer min-w-[200px]"
             >
-              {activeRoutines.map(r => (
-                <option key={r.userId} value={r.userId}>{r.user.name}</option>
-              ))}
+              {activeRoutines
+                .filter((r, index, self) => index === self.findIndex((t) => t.userId === r.userId))
+                .map(r => (
+                  <option key={r.userId} value={r.userId}>{r.user.name}</option>
+                ))
+              }
             </select>
           </div>
         </div>

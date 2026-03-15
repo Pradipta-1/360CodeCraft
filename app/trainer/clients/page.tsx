@@ -28,6 +28,7 @@ export default function TrainerClientsPage() {
 
   const loadData = () => {
     setLoading(true);
+    setError(null); // Always clear previous errors on a fresh load
     Promise.all([
       apiFetch("/api/users").then((res) => res.json()),
       apiFetch("/api/routines/requests").then((res) => res.json()),
@@ -35,11 +36,15 @@ export default function TrainerClientsPage() {
     ])
       .then(([usersData, requestsData, routinesData]) => {
         if (usersData.success && Array.isArray(usersData.data)) {
-          setClients(usersData.data);
+          const uniqueClients = usersData.data.filter((c: any, index: number, self: any[]) => 
+            index === self.findIndex((t: any) => t.id === c.id)
+          );
+          setClients(uniqueClients);
         } else {
           setError(usersData.error ?? "Failed to load clients");
         }
 
+        // Routines and requests failing are non-fatal — just skip updating state
         if (requestsData.success) {
           setRequests(requestsData.data);
         }
@@ -60,7 +65,8 @@ export default function TrainerClientsPage() {
 
   const handleOpenModal = (clientId: string) => {
     setSelectedClientId(clientId);
-    const existingRoutine = routines.find(r => r.userId === clientId);
+    // Load the active routine for editing, or any non-archived (available) routine
+    const existingRoutine = routines.find(r => r.userId === clientId && !r.isArchived);
     if (existingRoutine && Array.isArray(existingRoutine.days)) {
       setDaysData(existingRoutine.days);
     } else {
@@ -89,14 +95,29 @@ export default function TrainerClientsPage() {
 
     setSubmitting(true);
     try {
-      const res = await apiFetch("/api/routines", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClientId,
-          days: daysData
-        })
-      });
+      // Check if there's an existing non-archived routine for this client by this trainer
+      const existingActiveRoutine = routines.find(r => r.userId === selectedClientId && !r.isArchived);
+
+      let res;
+      if (existingActiveRoutine) {
+        // Update (PATCH) the existing active routine's days
+        res = await apiFetch(`/api/routines/${existingActiveRoutine.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ days: daysData })
+        });
+      } else {
+        // Create (POST) a new routine - it starts as "available", user sets it active
+        res = await apiFetch("/api/routines", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: selectedClientId,
+            days: daysData
+          })
+        });
+      }
+
       const data = await res.json();
       if (res.ok && data.success) {
         handleCloseModal();
@@ -110,7 +131,8 @@ export default function TrainerClientsPage() {
   };
 
   const handleDiscontinueRoutine = async () => {
-    const existingRoutine = routines.find(r => r.userId === selectedClientId);
+    // Find any non-archived routine for this client (active OR available)
+    const existingRoutine = routines.find(r => r.userId === selectedClientId && !r.isArchived);
     if (!existingRoutine) return;
 
     if (!confirm("Are you sure you want to discontinue this routine? The user will no longer be able to access it for new workouts, but their history will be preserved.")) return;
@@ -135,6 +157,7 @@ export default function TrainerClientsPage() {
   };
 
   const handleContinueRoutine = async (clientId: string) => {
+    // Find the archived routine for this client by THIS trainer
     const routine = routines.find(r => r.userId === clientId && r.isArchived);
     if (!routine) return;
 
@@ -203,22 +226,34 @@ export default function TrainerClientsPage() {
                         Setup Routine
                       </button>
                     )}
-                       {!routines.some(r => r.userId === c.id && r.isArchived) && (
-                         <button
+                    {(() => {
+                      // Only check routines belonging to THIS trainer for this client
+                      const myRoutinesForClient = routines.filter(r => r.userId === c.id);
+                      // Show "Edit Routine" for any non-archived routine (active OR available)
+                      const myEditableRoutine = myRoutinesForClient.find(r => !r.isArchived);
+                      const myArchivedRoutine = myRoutinesForClient.find(r => r.isArchived);
+
+                      if (myEditableRoutine) {
+                        return (
+                          <button
                             onClick={() => handleOpenModal(c.id)}
                             className="rounded-lg border border-[#00c896]/40 bg-transparent px-4 py-2 text-sm font-semibold text-[#00c896] hover:bg-[#00c896]/10 transition-colors"
                           >
-                            {routines.some(r => r.userId === c.id && r.isActive) ? "Edit Routine" : "Set Plan"}
+                            Edit Routine
                           </button>
-                       )}
-                    {routines.some(r => r.userId === c.id && r.isArchived && !r.isActive) && (
-                      <button
-                        onClick={() => handleContinueRoutine(c.id)}
-                        className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-400 hover:bg-yellow-500/20 transition-colors"
-                      >
-                        Continue Routine
-                      </button>
-                    )}
+                        );
+                      } else if (myArchivedRoutine) {
+                        return (
+                          <button
+                            onClick={() => handleContinueRoutine(c.id)}
+                            className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-400 hover:bg-yellow-500/20 transition-colors"
+                          >
+                            Continue Routine
+                          </button>
+                        );
+                      }
+                      return null;
+                    })()}
                     <Link
                       href="/trainer/dashboard"
                       className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-400 hover:bg-orange-500/20 transition-colors"
@@ -269,7 +304,7 @@ export default function TrainerClientsPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-bold font-white">
-                    {routines.some(r => r.userId === selectedClientId) ? "Edit 7-Day Routine" : "Create 7-Day Routine"}
+                    {routines.some(r => r.userId === selectedClientId && !r.isArchived) ? "Edit 7-Day Routine" : "Create 7-Day Routine"}
                   </h2>
                   <p className="text-slate-400 text-sm">Fill details for {daysData[activeDayIndex].day} below.</p>
                 </div>
@@ -306,7 +341,7 @@ export default function TrainerClientsPage() {
 
               <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
                 <div className="flex gap-2">
-                  {routines.some(r => r.userId === selectedClientId && r.isActive) && (
+                  {routines.some(r => r.userId === selectedClientId && !r.isArchived) && (
                     <button 
                       onClick={handleDiscontinueRoutine}
                       disabled={submitting}
@@ -337,7 +372,7 @@ export default function TrainerClientsPage() {
                   disabled={submitting}
                   className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {submitting ? "Sending..." : (routines.some(r => r.userId === selectedClientId) ? "Update Plan" : "Send Plan")}
+                  {submitting ? "Sending..." : (routines.some(r => r.userId === selectedClientId && !r.isArchived) ? "Update Plan" : "Send Plan")}
                   {!submitting && (
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                   )}

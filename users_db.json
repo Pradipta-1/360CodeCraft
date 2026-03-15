@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cmmqksiq800002j04eczmo1gk",
+    "email": "anita@gmail.com",
+    "role": "USER",
+    "name": "Anita Kauk"
+  },
+  {
+    "id": "cmmqwgtpg00002jcc087fgxar",
+    "email": "candice@gmail.com",
+    "role": "USER",
+    "name": "Candice Nuts"
+  },
+  {
+    "id": "cmmqnpfs40000nuggprr4yru3",
+    "email": "sohanganguly141@gmail.com",
+    "role": "TRAINER",
+    "name": "Sohan"
+  },
+  {
+    "id": "cmmqlvbj30000u78g5uoe13xo",
+    "email": "abcd@gmail.com",
+    "role": "USER",
+    "name": "Pradipta Santra"
+  },
+  {
+    "id": "cmmqq2qoy00002jd47plx0sym",
+    "email": "trainer_verify@test.com",
+    "role": "TRAINER",
+    "name": "Verify Trainer"
+  },
+  {
+    "id": "cmmpjekyx00002js0qqcjx4x5",
+    "email": "archismaan2007@gmail.com",
+    "role": "TRAINER",
+    "name": "Archismaan Sen"
+  }
+]

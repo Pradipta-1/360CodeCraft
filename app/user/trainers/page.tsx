@@ -99,38 +99,50 @@ export default function UserTrainersPage() {
   };
 
   const getTrainerAction = (trainerId: string) => {
-    const routine = routines.find(r => r.trainerId === trainerId);
-    if (routine) {
-      if (routine.isActive) {
-        return (
-          <button disabled className="rounded-lg bg-emerald-900/40 border border-emerald-500/30 text-emerald-400 px-4 py-2 text-sm font-semibold opacity-70 cursor-not-allowed">
-            Using
-          </button>
-        );
-      } else if (routine.isArchived) {
-        return (
-          <button 
-            onClick={() => handleRequestContinual(trainerId)}
-            disabled={actionLoading === trainerId}
-            className="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-500 transition-colors disabled:opacity-50"
-          >
-            {actionLoading === trainerId ? "Requesting..." : "Request Continual"}
-          </button>
-        );
-      } else {
-        return (
-          <button 
-            onClick={() => handleSetActive(routine.id, trainerId)}
-            disabled={actionLoading === trainerId}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-50"
-          >
-            {actionLoading === trainerId ? "Setting..." : "Set Routine"}
-          </button>
-        );
-      }
+    // Get all routines from this specific trainer for the current user
+    const trainerRoutines = routines.filter(r => r.trainerId === trainerId);
+
+    // Priority order: active > available > archived
+    const activeRoutine = trainerRoutines.find(r => r.isActive && !r.isArchived);
+    const availableRoutine = trainerRoutines.find(r => !r.isActive && !r.isArchived);
+    const archivedRoutine = trainerRoutines.find(r => r.isArchived);
+
+    if (activeRoutine) {
+      // User is currently using this trainer's routine
+      return (
+        <button disabled className="rounded-lg bg-emerald-900/40 border border-emerald-500/30 text-emerald-400 px-4 py-2 text-sm font-semibold opacity-70 cursor-not-allowed">
+          Using
+        </button>
+      );
     }
 
-    // 2. Check if we have a pending request
+    if (availableRoutine) {
+      // Trainer continued the routine (or sent new plan), user can set it
+      return (
+        <button 
+          onClick={() => handleSetActive(availableRoutine.id, trainerId)}
+          disabled={actionLoading === trainerId}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-50"
+        >
+          {actionLoading === trainerId ? "Setting..." : "Set Routine"}
+        </button>
+      );
+    }
+
+    if (archivedRoutine) {
+      // Trainer discontinued this routine - user needs to request continuation
+      return (
+        <button 
+          onClick={() => handleRequestContinual(trainerId)}
+          disabled={actionLoading === trainerId}
+          className="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-500 transition-colors disabled:opacity-50"
+        >
+          {actionLoading === trainerId ? "Requesting..." : "Request Continual"}
+        </button>
+      );
+    }
+
+    // No routine at all — check if pending request
     const request = requests.find(r => r.trainerId === trainerId);
     if (request && request.status === "PENDING") {
       return (
@@ -140,7 +152,7 @@ export default function UserTrainersPage() {
       );
     }
 
-    // 3. Otherwise, show "Request Routine"
+    // No routine, no request — show request button
     return (
       <button 
         onClick={() => handleRequestRoutine(trainerId)}

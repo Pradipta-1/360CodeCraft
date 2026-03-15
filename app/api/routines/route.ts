@@ -36,26 +36,14 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 1. Archive ANY existing active routine for this client/trainer
-      // @ts-ignore - Prisma type issue on this environment
-      await tx.routine.updateMany({
-        where: { 
-          userId: clientId, 
-          trainerId: user.id,
-          isActive: true 
-        },
-        data: { 
-          isActive: false,
-          isArchived: true
-        }
-      });
-
-      // 2. Create the NEW routine as the active one
+      // Create a new routine as "available" (not active, not archived).
+      // The user will decide when to activate it via "Set Routine".
+      // Do NOT auto-archive or touch other routines from other trainers.
       const result = await tx.routine.create({
         data: {
           trainerId: user.id,
           userId: clientId,
-          isActive: true, // New routines are active by default
+          isActive: false,  // User will set this when ready
           // @ts-ignore - Prisma type issue on this environment
           isArchived: false,
           days: days,

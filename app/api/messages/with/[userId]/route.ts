@@ -45,15 +45,21 @@ export async function GET(req: NextRequest, context: RouteContext) {
       orderBy: { createdAt: "asc" }
     });
 
+    const allParticipants = [
+      ...event.participants.map(p => ({ ...p, role: "USER" })),
+      ...event.trainerParticipants.map(tp => ({ ...tp, role: "TRAINER" }))
+    ];
+
+    const uniqueParticipants = allParticipants.filter((p, index, self) => 
+      index === self.findIndex((t) => t.id === p.id)
+    );
+
     return NextResponse.json({ 
       success: true, 
       data: messages,
       eventOrganizerId: event.organizerId,
       isCancelled: event.isCancelled,
-      participants: [
-        ...event.participants.map(p => ({ ...p, role: "USER" })),
-        ...event.trainerParticipants.map(tp => ({ ...tp, role: "TRAINER" }))
-      ]
+      participants: uniqueParticipants
     });
   }
 
