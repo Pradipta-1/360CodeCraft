@@ -16,7 +16,7 @@ type Thread = {
 type Message = {
   id: string;
   senderId: string;
-  sender: { id: string; name: string; role: string; avatarUrl?: string | null };
+  sender: { id: string; name: string; role: string; avatarUrl?: string | null } | null;
   receiverId?: string | null;
   eventId?: string | null;
   content: string;
@@ -248,7 +248,7 @@ export default function MessagesView() {
             <ul className="divide-y divide-slate-800/50">
               {threads.map((t, index) => {
                 const id = t.partner?.id;
-                const name = t.partner?.name ?? "Unknown";
+                const name = t.partner?.name ?? "DELETED ACCOUNT";
                 if (!id) return null;
                 const isSelected = selectedUserId === id;
                 const isGroup = t.type === "event" || t.partner?.isEvent;
@@ -298,9 +298,9 @@ export default function MessagesView() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-baseline mb-0.5">
                             <p 
-                              className={`truncate font-bold hover:underline cursor-pointer ${isSelected ? "text-emerald-400" : "text-white"}`}
+                              className={`truncate font-bold ${id ? "hover:underline cursor-pointer" : ""} ${isSelected ? "text-emerald-400" : "text-white"}`}
                               onClick={(e) => {
-                                if (!isGroup) {
+                                if (!isGroup && id) {
                                   e.stopPropagation();
                                   setProfileUserId(id);
                                 }
@@ -463,12 +463,12 @@ export default function MessagesView() {
                                 className="w-5 h-5 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0" 
                               />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-emerald-400 flex-shrink-0 border border-slate-700">
+                            <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-slate-500 flex-shrink-0 border border-slate-700">
                                 {m.sender?.name?.charAt(0).toUpperCase() || "?"}
                               </div>
                             )}
                             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider hover:underline">
-                              {m.sender?.name || 'Unknown'}
+                              {m.sender?.name || 'DELETED ACCOUNT'}
                             </span>
                           </button>
                           {isLeader && (
@@ -479,7 +479,7 @@ export default function MessagesView() {
                               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
                               : "bg-slate-800 text-slate-500"
                           }`}>
-                            {m.sender?.role === 'USER' ? 'TRAINEE' : (m.sender?.role || 'USER')}
+                            {m.sender?.role === 'USER' ? 'TRAINEE' : (m.sender?.role || 'GONE')}
                           </span>
                         </div>
                       )}

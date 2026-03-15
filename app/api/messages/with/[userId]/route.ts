@@ -66,6 +66,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
       ],
       eventId: null // Only direct messages
     },
+    include: {
+      sender: {
+        select: { id: true, name: true, role: true, avatarUrl: true }
+      }
+    },
     orderBy: { createdAt: "asc" }
   });
 

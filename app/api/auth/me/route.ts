@@ -89,3 +89,91 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. Data Preservation for others:
+      // If trainer, update their name in DailyProgress of clients to "DELETED ACCOUNT"
+      if (user.role === "TRAINER") {
+        // Find all routines created by this trainer
+        const trainerRoutines = await tx.routine.findMany({
+          where: { trainerId: user.id },
+          select: { id: true }
+        });
+        const routineIds = trainerRoutines.map(r => r.id);
+
+        // Update DailyProgress records linked to these routines
+        await tx.dailyProgress.updateMany({
+          where: { routineId: { in: routineIds } },
+          data: {
+            trainerName: "DELETED ACCOUNT",
+            routineId: null
+          }
+        });
+      }
+
+      // 2. Cascade cleanup (Prisma might handle some, but we ensure thoroughness)
+      
+      // Delete Posts, Likes, Comments (Likes/Comments cascade from Post, but we delete the ones user MADE)
+      await tx.like.deleteMany({ where: { userId: user.id } });
+      await tx.comment.deleteMany({ where: { userId: user.id } });
+      await tx.post.deleteMany({ where: { userId: user.id } });
+
+      // Delete Routine-related info
+      await tx.routineRequest.deleteMany({
+        where: { OR: [{ userId: user.id }, { trainerId: user.id }] }
+      });
+      await tx.workoutPlan.deleteMany({
+        where: { OR: [{ clientId: user.id }, { trainerId: user.id }] }
+      });
+      await tx.routine.deleteMany({
+        where: { OR: [{ userId: user.id }, { trainerId: user.id }] }
+      });
+
+      // Daily Progress (User's own history)
+      await tx.dailyProgress.deleteMany({ where: { userId: user.id } });
+
+      // Handle Events
+      if (user.role === "ORGANIZER" || user.role === "TRAINER") {
+        // Events organized by this user
+        await tx.event.deleteMany({ where: { organizerId: user.id } });
+      }
+      
+      // Remove from events as participant
+      // Prisma handles join-table removal automatically if correctly set, 
+      // but let's be safe and manually disconnected if needed (User has eventParticipants)
+      // Actually deleteMany on Join table isn't directly exposed in this schema way, it depends on relations.
+      // But standard relation deletion in Prisma handles the Join table.
+
+      // Notifications
+      await tx.notification.deleteMany({
+        where: { OR: [{ userId: user.id }, { relatedUserId: user.id }] }
+      });
+
+      // Trainer Requests/Invitations
+      await tx.trainerInvitation.deleteMany({
+        where: { OR: [{ organizerId: user.id }, { trainerId: user.id }] }
+      });
+      await tx.trainerEventRequest.deleteMany({
+        where: { trainerId: user.id }
+      });
+
+      // 3. Final Deletion
+      await tx.user.delete({ where: { id: user.id } });
+    });
+
+    return NextResponse.json({ success: true, message: "Account successfully deleted" });
+  } catch (error: any) {
+    console.error("Account deletion error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete account" },
+      { status: 500 }
+    );
+  }
+}
