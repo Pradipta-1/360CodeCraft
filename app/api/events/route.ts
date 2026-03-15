@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
       where: {
         status: status ? (status as any) : "APPROVED",
         openToTrainers:
-          openToTrainers != null ? openToTrainers === "true" : undefined
+          openToTrainers != null ? openToTrainers === "true" : undefined,
+        isCancelled: false
       },
       orderBy: { createdAt: "desc" },
       include: {

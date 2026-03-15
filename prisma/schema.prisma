@@ -88,9 +88,11 @@ model User {
   posts                Post[]
   likes               Like[]
   comments            Comment[]
+  progress            DailyProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  highestStreak Int @default(0)
 }
 
 model Post {
@@ -143,6 +145,7 @@ model Event {
   description      String
 
   status            EventStatus @default(APPROVED) // Defaulting to approved for now as per user request (trainer creation)
+  isCancelled       Boolean     @default(false)
   openToTrainers    Boolean     @default(false)
   trainersNeeded    Int?
   trainerConditions String?
@@ -197,7 +200,7 @@ model TrainerEventRequest {
 
 model Message {
   id         String  @id @default(cuid())
-  senderId   String
+  senderId   String?
   receiverId String?
   eventId    String?
 
@@ -206,8 +209,8 @@ model Message {
   read    Boolean @default(false)
   isSystem Boolean @default(false)
 
-  sender   User   @relation("Sender", fields: [senderId], references: [id])
-  receiver User?  @relation("Receiver", fields: [receiverId], references: [id])
+  sender   User?  @relation("Sender", fields: [senderId], references: [id], onDelete: SetNull)
+  receiver User?  @relation("Receiver", fields: [receiverId], references: [id], onDelete: SetNull)
   event    Event? @relation(fields: [eventId], references: [id])
 
   createdAt DateTime @default(now())
@@ -262,11 +265,33 @@ model Routine {
   userId    String
   trainerId String
   isActive  Boolean @default(false)
+  isArchived Boolean @default(false)
   days      Json // Array of { day: string, title: string, description: string }
 
-  user    User @relation("ClientRoutines", fields: [userId], references: [id])
-  trainer User @relation("TrainerRoutines", fields: [trainerId], references: [id])
+  user     User            @relation("ClientRoutines", fields: [userId], references: [id])
+  trainer  User            @relation("TrainerRoutines", fields: [trainerId], references: [id])
+  progress DailyProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DailyProgress {
+  id              String   @id @default(cuid())
+  userId          String
+  dateString      String   // format "YYYY-MM-DD"
+  isCompleted     Boolean
+
+  routineId       String?
+  dayTitle        String?
+  dayDescription  String?
+  trainerName     String?
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routine         Routine? @relation(fields: [routineId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, dateString])
 }

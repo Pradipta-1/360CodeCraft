@@ -49,6 +49,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       success: true, 
       data: messages,
       eventOrganizerId: event.organizerId,
+      isCancelled: event.isCancelled,
       participants: [
         ...event.participants.map(p => ({ ...p, role: "USER" })),
         ...event.trainerParticipants.map(tp => ({ ...tp, role: "TRAINER" }))
@@ -64,6 +65,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
         { senderId: otherId, receiverId: user.id }
       ],
       eventId: null // Only direct messages
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true, role: true, avatarUrl: true }
+      }
     },
     orderBy: { createdAt: "asc" }
   });

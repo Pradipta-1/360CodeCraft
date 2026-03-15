@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
+import ProfileModal from "./ProfileModal";
 
 type Thread = {
   partner: { id: string; name: string | null; avatarUrl?: string | null; isEvent?: boolean; role?: string } | null;
@@ -15,7 +16,7 @@ type Thread = {
 type Message = {
   id: string;
   senderId: string;
-  sender: { id: string; name: string; role: string; avatarUrl?: string | null };
+  sender: { id: string; name: string; role: string; avatarUrl?: string | null } | null;
   receiverId?: string | null;
   eventId?: string | null;
   content: string;
@@ -40,11 +41,13 @@ export default function MessagesView() {
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -73,6 +76,8 @@ export default function MessagesView() {
       setMessages(data.data ?? []);
       if (data.eventOrganizerId) setEventOrganizerId(data.eventOrganizerId);
       else setEventOrganizerId(null);
+      if (data.isCancelled) setIsCancelled(true);
+      else setIsCancelled(false);
       if (data.participants) setParticipants(data.participants);
       else setParticipants([]);
     } catch (e) {
@@ -243,7 +248,7 @@ export default function MessagesView() {
             <ul className="divide-y divide-slate-800/50">
               {threads.map((t, index) => {
                 const id = t.partner?.id;
-                const name = t.partner?.name ?? "Unknown";
+                const name = t.partner?.name ?? "DELETED ACCOUNT";
                 if (!id) return null;
                 const isSelected = selectedUserId === id;
                 const isGroup = t.type === "event" || t.partner?.isEvent;
@@ -292,7 +297,15 @@ export default function MessagesView() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-baseline mb-0.5">
-                            <p className={`truncate font-bold ${isSelected ? "text-emerald-400" : "text-white"}`}>
+                            <p 
+                              className={`truncate font-bold ${id ? "hover:underline cursor-pointer" : ""} ${isSelected ? "text-emerald-400" : "text-white"}`}
+                              onClick={(e) => {
+                                if (!isGroup && id) {
+                                  e.stopPropagation();
+                                  setProfileUserId(id);
+                                }
+                              }}
+                            >
                               {name}
                             </p>
                             <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap ml-2">
@@ -326,12 +339,26 @@ export default function MessagesView() {
                   {isEventGroup ? "G" : partnerName?.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div>
-                  <h2 className="font-bold text-white flex items-center gap-2">
+                  <h2 
+                    className={`font-bold text-white flex items-center gap-2 ${!isEventGroup ? "hover:underline cursor-pointer" : ""}`}
+                    onClick={() => {
+                      if (!isEventGroup && selectedUserId) {
+                        setProfileUserId(selectedUserId);
+                      }
+                    }}
+                  >
                     {partnerName}
                     {isEventGroup && currentUser?.id === eventOrganizerId && (
-                      <svg className={`w-4 h-4 text-slate-500 transition-transform ${showParticipantDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowParticipantDropdown(!showParticipantDropdown);
+                        }}
+                      >
+                        <svg className={`w-4 h-4 text-slate-500 transition-transform ${showParticipantDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     )}
                   </h2>
                   {isEventGroup && <p className="text-[10px] text-slate-500 font-medium">{participants.length} Participants</p>}
@@ -367,8 +394,11 @@ export default function MessagesView() {
                                 p.name?.charAt(0).toUpperCase() || "?"
                               )}
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-white truncate">{p.name || "Unknown"}</p>
+                            <div 
+                              className="min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => setProfileUserId(p.id)}
+                            >
+                              <p className="text-sm font-bold text-white truncate hover:underline">{p.name || "Unknown"}</p>
                               <p className="text-[9px] font-bold text-emerald-400 uppercase">{p.role}</p>
                             </div>
                           </div>
@@ -422,30 +452,34 @@ export default function MessagesView() {
                     >
                       {isEventGroup && !isOwn && (
                         <div className="flex items-center gap-2 mb-1 ml-3">
-                          {m.sender?.avatarUrl ? (
-                            <img 
-                              src={m.sender.avatarUrl} 
-                              alt={m.sender.name} 
-                              className="w-5 h-5 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all flex-shrink-0" 
-                              onClick={() => setEnlargedImage(m.sender.avatarUrl!)}
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-emerald-400 flex-shrink-0">
-                              {m.sender?.name?.charAt(0).toUpperCase() || "?"}
-                            </div>
-                          )}
+                          <button 
+                            onClick={() => setProfileUserId(m.senderId)}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                          >
+                            {m.sender?.avatarUrl ? (
+                              <img 
+                                src={m.sender.avatarUrl} 
+                                alt={m.sender.name} 
+                                className="w-5 h-5 rounded-full object-cover ring-1 ring-white/10 flex-shrink-0" 
+                              />
+                            ) : (
+                            <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-slate-500 flex-shrink-0 border border-slate-700">
+                                {m.sender?.name?.charAt(0).toUpperCase() || "?"}
+                              </div>
+                            )}
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider hover:underline">
+                              {m.sender?.name || 'DELETED ACCOUNT'}
+                            </span>
+                          </button>
                           {isLeader && (
                             <span className="text-lg text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" title="Group Leader">👑</span>
                           )}
-                          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                            {m.sender?.name || 'Unknown'}
-                          </span>
                           <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter ${
                             m.sender?.role === "TRAINER" 
                               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
                               : "bg-slate-800 text-slate-500"
                           }`}>
-                            {m.sender?.role === 'USER' ? 'TRAINEE' : (m.sender?.role || 'USER')}
+                            {m.sender?.role === 'USER' ? 'TRAINEE' : (m.sender?.role || 'GONE')}
                           </span>
                         </div>
                       )}
@@ -526,16 +560,19 @@ export default function MessagesView() {
                     onPaste={handlePaste}
                     placeholder="Write a message..."
                     className="flex-1 h-12 rounded-xl border border-slate-800 bg-slate-950 px-4 text-sm text-white placeholder:text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-                    disabled={sending}
+                    disabled={sending || isCancelled}
                   />
                   <button
                     type="submit"
-                    disabled={sending || (!newContent.trim() && !selectedFile)}
+                    disabled={sending || isCancelled || (!newContent.trim() && !selectedFile)}
                     className="h-12 px-6 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-600 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
                   >
                     {sending ? "..." : "Send"}
                   </button>
                 </div>
+                {isCancelled && (
+                  <p className="text-center text-xs font-bold text-red-400 mt-2 uppercase tracking-widest">Event Cancelled - No more messages allowed</p>
+                )}
               </div>
             </form>
           </>
@@ -574,6 +611,14 @@ export default function MessagesView() {
             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300"
           />
         </div>
+      )}
+
+      {/* Profile Modal */}
+      {profileUserId && (
+        <ProfileModal 
+          userId={profileUserId} 
+          onClose={() => setProfileUserId(null)} 
+        />
       )}
 
       <style jsx>{`

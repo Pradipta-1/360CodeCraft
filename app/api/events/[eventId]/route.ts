@@ -80,11 +80,23 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: false, error: "Only the organizer can delete this event" }, { status: 403 });
     }
 
-    // Delete associated messages and then the event
-    await prisma.message.deleteMany({ where: { eventId } });
-    await prisma.event.delete({ where: { id: eventId } });
+    // Soft-cancel the event
+    await prisma.event.update({
+      where: { id: eventId },
+      data: { isCancelled: true }
+    });
 
-    return NextResponse.json({ success: true, message: "Event deleted successfully" });
+    // Create system message
+    await prisma.message.create({
+      data: {
+        senderId: user.id,
+        eventId: eventId,
+        content: "Event has been cancelled",
+        isSystem: true
+      }
+    });
+
+    return NextResponse.json({ success: true, message: "Event cancelled successfully" });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

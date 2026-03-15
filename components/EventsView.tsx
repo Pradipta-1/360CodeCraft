@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/apiFetch";
 import CreateEventModal from "./CreateEventModal";
 import EditEventModal from "./EditEventModal";
+import ProfileModal from "./ProfileModal";
 
 type Event = {
   id: string;
@@ -34,6 +35,7 @@ export default function EventsView({ role }: Props) {
   const [viewingParticipants, setViewingParticipants] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -256,42 +258,30 @@ export default function EventsView({ role }: Props) {
                 <>
                   {viewingParticipants.trainerParticipants.map(tp => (
                     <div key={tp.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-emerald-500/20 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden cursor-pointer"
-                          onClick={() => tp.avatarUrl && setEnlargedImage(tp.avatarUrl)}
-                        >
-                          {tp.avatarUrl ? (
-                            <img src={tp.avatarUrl} alt={tp.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
-                          ) : (
-                            <div className="w-full h-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                              {tp.name.charAt(0)}
-                            </div>
-                          )}
+                      <button 
+                        onClick={() => setProfileUserId(tp.id)}
+                        className="flex items-center gap-3 text-white font-medium hover:text-emerald-400 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden ring-1 ring-emerald-500/20">
+                          {tp.avatarUrl ? <img src={tp.avatarUrl} alt={tp.name} className="w-full h-full object-cover" /> : tp.name.charAt(0)}
                         </div>
-                        <span className="text-white font-medium">{tp.name}</span>
-                      </div>
+                        {tp.name}
+                      </button>
                       <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-400 uppercase tracking-tighter">Trainer</span>
                     </div>
                   ))}
                   {viewingParticipants.participants.map(p => (
-                    <div key={p.id} className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden cursor-pointer"
-                          onClick={() => p.avatarUrl && setEnlargedImage(p.avatarUrl)}
-                        >
-                          {p.avatarUrl ? (
-                            <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
-                          ) : (
-                            <div className="w-full h-full bg-slate-800 text-slate-400 flex items-center justify-center font-bold">
-                              {p.name.charAt(0)}
-                            </div>
-                          )}
+                    <div key={p.id} className="flex justify-between items-center group/p">
+                      <button 
+                        onClick={() => setProfileUserId(p.id)}
+                        className="flex items-center gap-3 text-white font-medium hover:text-emerald-400 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold overflow-hidden ring-1 ring-slate-700/50">
+                          {p.avatarUrl ? <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" /> : p.name.charAt(0)}
                         </div>
-                        <span className="text-white font-medium">{p.name}</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Participant</span>
+                        {p.name}
+                      </button>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest pl-2">Member</span>
                     </div>
                   ))}
                 </>
@@ -321,6 +311,10 @@ export default function EventsView({ role }: Props) {
         onClose={() => setEditingEvent(null)}
         onSuccess={fetchEvents}
       />
+
+      {profileUserId && (
+        <ProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
     </div>
   );
 }

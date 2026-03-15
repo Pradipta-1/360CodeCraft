@@ -23,6 +23,11 @@ export default function OrganizerProfileSettingsPage() {
   const [role, setRole] = useState("");
   const [updating, setUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmName, setConfirmName] = useState('');
+  const [confirmPhrase, setConfirmPhrase] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function loadUser() {
@@ -113,6 +118,25 @@ export default function OrganizerProfileSettingsPage() {
       setUpdating(false);
     }
   }
+
+  const handleDelete = async () => {
+    if (!user || confirmName !== user.name || confirmPhrase.toLowerCase() !== 'I want to delete my account'.toLowerCase()) return;
+    
+    setDeleting(true);
+    try {
+      const res = await apiFetch('/api/auth/me', { method: 'DELETE' });
+      if (res.ok) {
+        window.location.href = '/'; // Logout and redirect
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete account');
+      }
+    } catch (err) {
+      alert('Error deleting account');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <OrganizerShell>
@@ -264,6 +288,64 @@ export default function OrganizerProfileSettingsPage() {
                     Logout
                   </button>
                 </>
+              )}
+            </div>
+
+            <div className="pt-8 border-t border-slate-800">
+              {!showDeleteConfirm ? (
+                <button 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-xs font-bold text-red-500/60 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  Delete Account
+                </button>
+              ) : (
+                <div className="max-w-md p-6 rounded-2xl bg-red-500/5 border border-red-500/20 animate-in slide-in-from-bottom-2 duration-300">
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-tight mb-2">Danger Zone</h3>
+                  <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                    This will permanently delete your account and remove all your data. 
+                    Sent messages and workout history will be anonymized as "DELETED ACCOUNT".
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-wider">Type your username to confirm:</label>
+                      <input 
+                        type="text"
+                        value={confirmName}
+                        onChange={(e) => setConfirmName(e.target.value)}
+                        placeholder={user?.name}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-white outline-none focus:border-red-500/50 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-wider">Type "I want to delete my account":</label>
+                      <input 
+                        type="text"
+                        value={confirmPhrase}
+                        onChange={(e) => setConfirmPhrase(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-white outline-none focus:border-red-500/50 transition-colors"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-3 pt-2">
+                      <button 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm font-bold hover:bg-slate-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={handleDelete}
+                        disabled={deleting || confirmName !== user?.name || confirmPhrase.toLowerCase() !== 'I want to delete my account'.toLowerCase()}
+                        className="flex-[2] px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-bold hover:bg-red-500 disabled:opacity-30 transition-all shadow-lg shadow-red-600/20"
+                      >
+                        {deleting ? 'Deleting...' : 'Permanently Delete'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
