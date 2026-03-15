@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     // Wrap in transaction to ensure request is marked fulfilled when routine is created
     const result = await prisma.$transaction(async (tx) => {
-      // Find the pending request
+      // Find the pending request (optional)
       const request = await tx.routineRequest.findUnique({
         where: {
           userId_trainerId: {
@@ -28,27 +28,41 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      if (!request || request.status !== "PENDING") {
-        throw new Error("No pending routine request from this client.");
+      // Mark request as FULFILLED if it exists and is PENDING
+      if (request && request.status === "PENDING") {
+        await tx.routineRequest.update({
+          where: { id: request.id },
+          data: { status: "FULFILLED" }
+        });
       }
 
-      // Mark request as FULFILLED
-      await tx.routineRequest.update({
-        where: { id: request.id },
-        data: { status: "FULFILLED" }
-      });
-
-      // Create the Routine. Default isActive is false, until client explicitly sets it.
-      const routine = await tx.routine.create({
-        data: {
+      // 1. Archive ANY existing active routine for this client/trainer
+      // @ts-ignore - Prisma type issue on this environment
+      await tx.routine.updateMany({
+        where: { 
+          userId: clientId, 
           trainerId: user.id,
-          userId: clientId,
-          isActive: false, 
-          days: days, // the JSON payload
+          isActive: true 
+        },
+        data: { 
+          isActive: false,
+          isArchived: true
         }
       });
 
-      return routine;
+      // 2. Create the NEW routine as the active one
+      const result = await tx.routine.create({
+        data: {
+          trainerId: user.id,
+          userId: clientId,
+          isActive: true, // New routines are active by default
+          // @ts-ignore - Prisma type issue on this environment
+          isArchived: false,
+          days: days,
+        }
+      });
+
+      return result;
     });
 
     return NextResponse.json({ success: true, data: result });

@@ -51,6 +51,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "You are not a participant of this event group." }, { status: 403 });
     }
 
+    if (event.isCancelled) {
+      return NextResponse.json({ success: false, error: "This event has been cancelled. No more messages allowed." }, { status: 403 });
+    }
+
     const message = await prisma.message.create({
       data: {
         senderId: user.id,

@@ -41,27 +41,25 @@ export async function PATCH(req: NextRequest) {
           await tx.workoutPlan.deleteMany({ where: { trainerId: user.id } });
           await tx.routineRequest.deleteMany({ where: { trainerId: user.id } });
 
-          // 2. Handle events organized by this trainer
+          // 2. Cancel events organized by this trainer
           const organizedEvents = await tx.event.findMany({
-            where: { organizerId: user.id },
-            include: { trainerParticipants: { select: { id: true } } }
+            where: { organizerId: user.id, isCancelled: false }
           });
-
+          
           for (const event of organizedEvents) {
-            const nextTrainer = event.trainerParticipants.find(t => t.id !== user.id);
-            if (nextTrainer) {
-              // Transfer ownership
-              await tx.event.update({
-                where: { id: event.id },
-                data: {
-                  organizerId: nextTrainer.id,
-                  trainerParticipants: { disconnect: { id: nextTrainer.id } }
-                }
-              });
-            } else {
-              // No other trainer, delete event
-              await tx.event.delete({ where: { id: event.id } });
-            }
+            await tx.event.update({
+              where: { id: event.id },
+              data: { isCancelled: true }
+            });
+            // Send system message
+            await tx.message.create({
+              data: {
+                senderId: user.id,
+                eventId: event.id,
+                content: "Event has been cancelled",
+                isSystem: true
+              }
+            });
           }
         }
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { apiFetch } from "@/lib/apiFetch";
+import ProfileModal from "./ProfileModal";
 
 type Comment = {
   id: string;
@@ -63,6 +64,7 @@ export default function CommunityFeed() {
     message: "",
     onConfirm: () => {},
   });
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const commentFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -359,34 +361,41 @@ export default function CommunityFeed() {
           </div>
           <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800/30">
             <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">{comment.user.name}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 uppercase font-bold tracking-wider scale-75 origin-left">
-                  {comment.user.role}
-                </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <button
+                    onClick={() => setProfileUserId(comment.user.id)}
+                    className="text-sm font-bold text-white hover:text-emerald-400 hover:underline transition-all"
+                  >
+                    {comment.user.name}
+                  </button>
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                    {comment.user.role}
+                  </span>
+                </div>
               </div>
               <span className="text-[10px] text-slate-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
             </div>
             {comment.content && <p className="text-sm text-slate-300 mb-2">{comment.content}</p>}
             {comment.imageUrl && (
               <div className="mb-2 max-w-xs rounded-lg overflow-hidden border border-slate-800">
-                <img 
-                  src={comment.imageUrl} 
-                  alt="Comment image" 
+                <img
+                  src={comment.imageUrl}
+                  alt="Comment image"
                   className="w-full h-auto cursor-pointer hover:opacity-90 grayscale-[0.3] hover:grayscale-0 transition-all"
                   onClick={() => setEnlargedImage(comment.imageUrl)}
                 />
               </div>
             )}
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => setReplyingTo(prev => ({ ...prev, [postId]: comment.id }))}
                 className="text-[10px] font-bold text-slate-400 hover:text-emerald-400 transition-colors uppercase tracking-widest"
               >
                 Reply
               </button>
               {(currentUser?.id === comment.user.id || currentUser?.role === "ADMIN") && (
-                <button 
+                <button
                   onClick={() => handleDeleteComment(postId, comment.id)}
                   className="text-[10px] font-bold text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest"
                 >
@@ -396,7 +405,7 @@ export default function CommunityFeed() {
             </div>
           </div>
         </div>
-        
+
         {/* Child Replies */}
         {replies.length > 0 && (
           <div className="space-y-4 mt-2">
@@ -489,7 +498,7 @@ export default function CommunityFeed() {
             <div key={post.id} className="card bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Post Header */}
               <div className="p-4 flex items-center gap-3 border-b border-slate-800/50">
-                <div 
+                <div
                   className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 font-bold overflow-hidden ring-2 ring-emerald-500/20 cursor-pointer flex-shrink-0"
                   onClick={() => post.user.avatarUrl && setEnlargedImage(post.user.avatarUrl)}
                 >
@@ -499,14 +508,21 @@ export default function CommunityFeed() {
                     post.user.name.charAt(0).toUpperCase()
                   )}
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
+                  <button
+                    onClick={() => setProfileUserId(post.user.id)}
+                    className="text-white font-bold hover:text-emerald-400 hover:underline transition-all text-left block"
+                  >
+                    {post.user.name}
+                  </button>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white hover:text-emerald-400 transition-colors cursor-pointer">{post.user.name}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase font-bold tracking-wider">
                       {post.user.role}
                     </span>
+                    <span className="text-[10px] text-slate-500">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-500">{new Date(post.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 </div>
                 
                 {(currentUser?.id === post.user.id || currentUser?.role === "ADMIN") && (
@@ -754,6 +770,9 @@ export default function CommunityFeed() {
           background: #475569;
         }
       `}</style>
+      {profileUserId && (
+        <ProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
     </div>
   );
 }

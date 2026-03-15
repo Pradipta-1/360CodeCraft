@@ -58,6 +58,27 @@ export default function UserTrainersPage() {
     }
   };
 
+  const handleRequestContinual = async (trainerId: string) => {
+    setActionLoading(trainerId);
+    try {
+      const res = await apiFetch("/api/routines/request-continual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trainerId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert("Request sent to trainer!");
+      } else {
+        alert(data.error || "Failed to send request.");
+      }
+    } catch (e) {
+      alert("Error sending request.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleSetActive = async (routineId: string, trainerId: string) => {
     setActionLoading(trainerId);
     try {
@@ -78,13 +99,22 @@ export default function UserTrainersPage() {
   };
 
   const getTrainerAction = (trainerId: string) => {
-    // 1. Check if we have a routine from this trainer
     const routine = routines.find(r => r.trainerId === trainerId);
     if (routine) {
       if (routine.isActive) {
         return (
           <button disabled className="rounded-lg bg-emerald-900/40 border border-emerald-500/30 text-emerald-400 px-4 py-2 text-sm font-semibold opacity-70 cursor-not-allowed">
             Using
+          </button>
+        );
+      } else if (routine.isArchived) {
+        return (
+          <button 
+            onClick={() => handleRequestContinual(trainerId)}
+            disabled={actionLoading === trainerId}
+            className="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-500 transition-colors disabled:opacity-50"
+          >
+            {actionLoading === trainerId ? "Requesting..." : "Request Continual"}
           </button>
         );
       } else {
