@@ -4,6 +4,10 @@ export default function LandingPage() {
   return (
     <main className="landing-hero">
       <div className="landing-hero-content">
+        <div className="landing-logo">
+          <span className="landing-logo-icon">🏋️‍♂️</span>
+          <h1 className="landing-logo-text">FitConnect</h1>
+        </div>
         <h1 className="landing-hero-title">
           Connect. Train. Achieve.
         </h1>

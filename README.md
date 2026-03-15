@@ -1,6 +1,6 @@
-# Community Fitness Platform
+# FitConnect
 
-A Next.js-based community fitness platform that connects users, trainers, and admins in a comprehensive fitness ecosystem.
+FitConnect is a Next.js-based community fitness platform that connects users, trainers, and admins in a comprehensive fitness ecosystem.
 
 ## Features
 

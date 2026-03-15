@@ -187,6 +187,21 @@ export default function LoginPage() {
           backdrop-filter: blur(20px);
           padding: 50px 40px;
         }
+        .login-logo {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+        .login-logo-icon {
+          font-size: 1.5rem;
+        }
+        .login-logo-text {
+          font-size: 1.4rem;
+          font-weight: bold;
+          color: #00c896;
+        }
         .login-title {
           font-size: 34px;
           font-weight: 800;
@@ -272,6 +287,10 @@ export default function LoginPage() {
         <div id="star-container" ref={starContainerRef} />
 
         <div className="login-container">
+          <div className="login-logo">
+            <span className="login-logo-icon">🏋️‍♂️</span>
+            <h2 className="login-logo-text">FitConnect</h2>
+          </div>
           <h1 className="login-title">Welcome Back</h1>
           <p className="login-subtitle">
             Log in to access your workouts, trainers, and fitness community.

@@ -98,6 +98,10 @@ export default function RegisterPage() {
     <main className="auth-shell">
       <div className="auth-star-container" />
       <div className="auth-container">
+        <div className="auth-logo">
+          <span className="auth-logo-icon">🏋️‍♂️</span>
+          <h2 className="auth-logo-text">FitConnect</h2>
+        </div>
         <div className="auth-tabs">
           <button
             type="button"

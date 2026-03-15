@@ -104,7 +104,7 @@ export default function OrganizerShell({ children }: Props) {
                 )}
               </div>
             )}
-            {user ? `HELLO, ORGANIZER ${user.name.toUpperCase()}` : "FITNESS PORTAL - ORGANIZER"}
+            {user ? `HELLO, ORGANIZER ${user.name.toUpperCase()}` : "FitConnect - ORGANIZER"}
           </div>
           <div className="nav-list">
             <Link
@@ -163,7 +163,7 @@ export default function OrganizerShell({ children }: Props) {
         </main>
         
         <footer className="app-footer">
-          &copy; 2026 Fitness Portal Dashboard. All rights reserved.
+          &copy; 2026 FitConnect. All rights reserved.
         </footer>
       </div>
 

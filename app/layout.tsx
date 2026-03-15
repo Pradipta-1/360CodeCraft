@@ -2,7 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "Community Fitness Platform",
+  title: "FitConnect",
   description: "Find trainers, join events, build your fitness community."
 };
 

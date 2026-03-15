@@ -104,7 +104,7 @@ export default function UserShell({ children }: Props) {
                 )}
               </div>
             )}
-            {user ? `HELLO, TRAINEE ${user.name.toUpperCase()}` : "FITNESS PORTAL - USER"}
+            {user ? `HELLO, TRAINEE ${user.name.toUpperCase()}` : "FitConnect - USER"}
           </div>
           <div className="nav-list">
             <Link
@@ -152,7 +152,7 @@ export default function UserShell({ children }: Props) {
         </main>
         
         <footer className="app-footer">
-          &copy; 2026 Fitness Portal Dashboard. All rights reserved.
+          &copy; 2026 FitConnect. All rights reserved.
         </footer>
       </div>
 
