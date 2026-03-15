@@ -1,17 +1,24 @@
 # Community Fitness Platform
 
-A Next.js-based community fitness platform that connects users, trainers, organizers, and admins in a comprehensive fitness ecosystem.
+A Next.js-based community fitness platform that connects users, trainers, and admins in a comprehensive fitness ecosystem.
 
 ## Features
 
-- **User Roles**: Admin, Organizer, Trainer, and regular User accounts
-- **Event Management**: Create and manage fitness events
-- **Messaging System**: Communicate between users, trainers, and organizers
-- **Trainer Invitations & Requests**: Manage trainer-client relationships
-- **Workout Plans & Routines**: Track progress and routines
-- **Community Feed**: Share posts and comments
-- **Notifications**: Stay updated on activities
-- **Analytics & Reports**: Admin and organizer dashboards
+- **Multi-Role Authentication**: Secure JWT-based login/registration for Users, Trainers, and Admins
+- **Personalized Dashboards**: Role-specific dashboards with calendar views, streak tracking, and quick feature access
+- **Event Management**: Create, edit, approve, and view fitness events; public event discovery
+- **Messaging System**: Direct messaging and threaded conversations between users and trainers
+- **Trainer-Client Relationships**: Send/receive trainer invitations and requests; manage client portfolios
+- **Workout Routines & Plans**: Create and assign 7-day workout routines; track exercise completion
+- **Progress Tracking**: Monitor workout streaks, performance metrics, and routine history
+- **Community Feed**: Share posts, comments, and fitness content with the community
+- **Notifications**: Real-time alerts for messages, events, and platform updates
+- **File Uploads**: Upload profile avatars and images for posts/messages
+- **Admin Moderation**: Approve pending events; access analytics, reports, and platform metrics
+- **Trainer Earnings**: Track and manage session-based earnings and client payments
+- **Profile Management**: Update personal profiles, settings, certifications, and preferences
+- **Calendar Integration**: Visual workout and event scheduling with interactive calendars
+- **Streak System**: Track and display workout consistency with detailed streak history
 
 ## Prerequisites
 
@@ -65,32 +72,75 @@ The application will be available at:
 ## Testing Features
 
 1. **Authentication**:
-   - Register new accounts at `/auth/register`
+   - Register new accounts at `/auth/register` (test User, Trainer, Admin roles)
    - Login at `/auth/login`
-   - Test different user roles (admin, organizer, trainer, user)
+   - Verify role-based access and JWT token handling
 
 2. **User Dashboard** (`/user/dashboard`):
-   - View personal dashboard
-   - Access community feed, events, messages, trainers
+   - View personalized dashboard with calendar, active routines, and streaks
+   - Track workout progress and completion status
+   - Access community feed, events, messages, and trainer connections
 
 3. **Trainer Features** (`/trainer/dashboard`):
-   - Manage clients, earnings, events
+   - Manage client lists and view their progress/routines
+   - Create and assign 7-day workout plans (`/trainer/clients/[clientId]/plan`)
+   - Monitor client streaks and earnings
    - Handle trainer requests and invitations
 
-4. **Organizer Features** (`/organizer/dashboard`):
-   - Create and manage events
-   - View participants, messages, community
+4. **Admin Features** (`/admin/dashboard`):
+   - Approve pending events (`/admin/events`)
+   - Access analytics and reports (`/admin/analytics`, `/admin/reports`)
+   - Moderate platform content and user management
 
-5. **Admin Features** (`/admin/dashboard`):
-   - Access analytics, reports, events, trainers
+5. **Event Management**:
+   - Create events via modal or `/events` page
+   - Edit existing events
+   - View public upcoming events (`/events`)
+   - Admin approval workflow for new events
 
-6. **API Testing**:
-   - Use tools like Postman or curl to test API endpoints
-   - Key endpoints: `/api/auth/*`, `/api/events/*`, `/api/messages/*`, `/api/users/*`
+6. **Messaging System**:
+   - Send direct messages (`/messages`)
+   - Create threaded conversations (`/messages/threads`)
+   - Message specific users (`/messages/with/[userId]`)
 
-7. **Database**:
-   - Check Prisma Studio: `npx prisma studio`
-   - Verify data in your Supabase dashboard
+7. **Workout Routines**:
+   - View active 7-day routines with exercise details
+   - Track completion and progress (`/progress`)
+   - Request new routines (`/routines/request`)
+   - Continue existing routines (`/routines/[id]/continue`)
+
+8. **Community Features**:
+   - Post and comment on community feed (`/community`)
+   - Share fitness content and interact with posts
+
+9. **Notifications**:
+   - Receive real-time notifications (`/notifications`)
+   - Mark notifications as read
+
+10. **File Uploads**:
+    - Upload profile avatars (`/profile-settings`)
+    - Attach images to posts and messages (`/upload`)
+
+11. **API Testing**:
+    - Test all endpoints with Postman or curl:
+      - `/api/auth/*` (login, register, me)
+      - `/api/events/*` (CRUD operations, public events)
+      - `/api/messages/*` (threads, direct messaging)
+      - `/api/notifications/*` (mark read)
+      - `/api/posts/*` (community feed)
+      - `/api/progress/*` (workout tracking)
+      - `/api/routines/*` (create, continue, request)
+      - `/api/trainer-invitations/*` (invitations)
+      - `/api/trainer-requests/*` (requests)
+      - `/api/trainers/*` (trainer management)
+      - `/api/upload/*` (file uploads)
+      - `/api/users/*` (user profiles)
+      - `/api/workout-plans/*` (plans)
+
+12. **Database**:
+    - Check Prisma Studio: `npx prisma studio`
+    - Verify data integrity in Supabase dashboard
+    - Test migrations and schema relationships
 
 ## Building for Production
 
